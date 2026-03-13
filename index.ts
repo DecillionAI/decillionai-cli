@@ -274,9 +274,33 @@ class Decillion {
   public async connect() {
     await this.connectoToTlsServer();
     if (this.userId && this.privateKey) {
-      console.log((await this.authenticate()).obj);
-      this.username = (await this.users.me()).obj.user.username;
+      let auth = await this.authenticateSession();
+      console.log(auth.obj);
     }
+  }
+  public async connectTransport() {
+    await this.connectoToTlsServer();
+  }
+  public hasCredentials(): boolean {
+    return !!this.userId && !!this.privateKey;
+  }
+  public async authenticateSession(): Promise<{ resCode: number; obj: any }> {
+    if (!this.userId || !this.privateKey) {
+      return {
+        resCode: USER_ID_NOT_SET_ERR_CODE,
+        obj: { message: USER_ID_NOT_SET_ERR_MSG },
+      };
+    }
+    const authRes = await this.authenticate();
+    if (authRes.resCode !== 0) {
+      return authRes;
+    }
+    const meRes = await this.users.me();
+    if (meRes.resCode !== 0) {
+      return meRes;
+    }
+    this.username = meRes.obj?.user?.username;
+    return { resCode: 0, obj: { message: "authenticated", user: meRes.obj?.user } };
   }
   private loginServer: Server | undefined;
   private runLoginServer() {
@@ -489,6 +513,116 @@ class Decillion {
         offset: offset,
         count: count,
       });
+    },
+    transfer: async (
+      toUsername: string,
+      amount: number
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/transfer", {
+        toUsername,
+        amount,
+      });
+    },
+    mint: async (
+      toUserEmail: string,
+      amount: number
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/mint", {
+        toUserEmail,
+        amount,
+      });
+    },
+    checkSign: async (
+      userId: string,
+      payload: string,
+      signature: string
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/checkSign", {
+        userId,
+        payload,
+        signature,
+      });
+    },
+    create: async (payload: any): Promise<{ resCode: number; obj: any }> => {
+      return await this.sendRequest("", "/users/create", payload);
+    },
+    delete: async (payload: any): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/delete", payload);
+    },
+    update: async (payload: any): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/update", payload);
+    },
+    meta: async (userId: string): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/meta", { userId });
+    },
+    getByUsername: async (
+      username: string
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/getByUsername", { username });
+    },
+    find: async (
+      offset: number,
+      count: number,
+      query: string
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/find", { offset, count, query });
+    },
+    authenticate: async (): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/users/authenticate", {});
     },
   };
   public points = {
@@ -725,9 +859,111 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/points/removeMember", {
-        pointId: pointId,
+      return await this.sendRequest(this.userId, "/points/readMembers", {
+        pointId,
       });
+    },
+    leave: async (pointId: string): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/leave", { pointId });
+    },
+    addApp: async (payload: any): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/addApp", payload);
+    },
+    listApps: async (payload: any): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/listApps", payload);
+    },
+    updateMachine: async (
+      payload: any
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/updateMachine", payload);
+    },
+    removeApp: async (
+      payload: any
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/removeApp", payload);
+    },
+    removeMachine: async (
+      payload: any
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/removeMachine", payload);
+    },
+    updateMemberAccess: async (
+      payload: any
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/updateMemberAccess", payload);
+    },
+    updateMachineAccess: async (
+      payload: any
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/updateMachineAccess", payload);
+    },
+    getDefaultAccess: async (
+      payload: any
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/getDefaultAccess", payload);
+    },
+    meta: async (pointId: string): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/points/meta", { pointId });
     },
   };
   public invites = {
@@ -785,6 +1021,26 @@ class Decillion {
         pointId: pointId,
       });
     },
+    listPointInvites: async (
+      pointId: string
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/invites/listPointInvites", { pointId });
+    },
+    listUserInvites: async (): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/invites/listUserInvites", {});
+    },
   };
   public chains = {
     create: async (
@@ -834,6 +1090,18 @@ class Decillion {
       return await this.sendRequest(this.userId, "/chains/registerNode", {
         orig: orig,
       });
+    },
+    createFromPoint: async (
+      pointId: string,
+      isTemp: boolean
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/chains/createFromPoint", { pointId, isTemp });
     },
   };
   public machines = {
@@ -999,6 +1267,97 @@ class Decillion {
         count: count,
       });
     },
+    deleteApp: async (appId: string): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/apps/deleteApp", { appId });
+    },
+    updateApp: async (payload: any): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/apps/updateApp", payload);
+    },
+    myCreatedApps: async (
+      offset: number,
+      count: number
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/apps/myCreatedApps", { offset, count });
+    },
+    signal: async (payload: any): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/machines/signal", payload);
+    },
+    stopMachine: async (
+      machineId: string
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/apps/stopMachine", { machineId });
+    },
+    readBuildLogs: async (
+      machineId: string
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/machines/readBuildLogs", { machineId });
+    },
+    readMachineBuilds: async (
+      machineId: string,
+      offset: number,
+      count: number
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/machines/readMachineBuilds", {
+        machineId,
+        offset,
+        count,
+      });
+    },
+    listAppMachines: async (
+      appId: string,
+      offset: number,
+      count: number
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/machines/listAppMachines", { appId, offset, count });
+    },
   };
   storage = {
     upload: async (pointId: string, data: Buffer, fileId?: string) => {
@@ -1027,7 +1386,51 @@ class Decillion {
         entityId: entityId,
       });
     },
-    download: async (pointId: string, fileId: string) => {
+    deleteUserEntity: async (entityId: string) => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/storage/deleteUserEntity", { entityId });
+    },
+    uploadPointEntity: async (pointId: string, entityId: string, data: Buffer) => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/storage/uploadPointEntity", {
+        pointId,
+        entityId,
+        data: data.toString("base64"),
+      });
+    },
+    uploadAppEntity: async (appId: string, entityId: string, data: Buffer) => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/storage/uploadAppEntity", {
+        appId,
+        entityId,
+        data: data.toString("base64"),
+      });
+    },
+    deletePointEntity: async (pointId: string, entityId: string) => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/storage/deletePointEntity", { pointId, entityId });
+    },
+  download: async (pointId: string, fileId: string) => {
       if (!this.userId) {
         return {
           resCode: USER_ID_NOT_SET_ERR_CODE,
@@ -1668,247 +2071,273 @@ const commands: {
   },
 };
 
-const help = `
-Decillion AI CLI – Command Reference
+const helpEntries: { [key: string]: string } = {
+  login: `login [username]
+  → Log into your account.
+  Example: login alice123`,
+  logout: `logout
+  → Log out and clear locally stored authentication credentials.
+  Example: logout`,
+  charge: `charge
+  → Create a payment checkout session URL for your account.
+  Example: charge`,
+  printPrivateKey: `printPrivateKey
+  → Print your account private key in base64 body format.
+  Example: printPrivateKey`,
+  "users.me": `users.me
+  → Get your own user profile and metadata.
+  Example: users.me`,
+  "users.get": `users.get [userId]
+  → Get data for a specific user by ID.
+  Example: users.get 123@global`,
+  "users.lockToken": `users.lockToken [amount] [type] [target]
+  → Lock tokens for payment/execution use-cases.
+  Example: users.lockToken 100 pay 145@global`,
+  "users.consumeLock": `users.consumeLock [lockId] [type] [amount]
+  → Consume a previously created token lock and settle payment.
+  Example: users.consumeLock 4f0f02a8d0 pay 100`,
+  "users.list": `users.list [offset] [count]
+  → List users in paginated format.
+  Example: users.list 0 10`,
+  "points.create": `points.create [isPublic] [hasPersistentHistory] [origin] [title]
+  → Create a new point.
+  Example: points.create true true global study-room`,
+  "points.update": `points.update [pointId] [isPublic] [hasPersistentHistory]
+  → Update visibility/history settings for a point.
+  Example: points.update 345@global false true`,
+  "points.get": `points.get [pointId]
+  → Retrieve details of a point.
+  Example: points.get 345@global`,
+  "points.delete": `points.delete [pointId]
+  → Delete a point.
+  Example: points.delete 345@global`,
+  "points.join": `points.join [pointId]
+  → Join a public point.
+  Example: points.join 345@global`,
+  "points.myPoints": `points.myPoints [offset] [count] [origin]
+  → List your own points in an origin.
+  Example: points.myPoints 0 10 global`,
+  "points.list": `points.list [offset] [count]
+  → List points with pagination.
+  Example: points.list 0 10`,
+  "points.history": `points.history [pointId]
+  → Read signal/history log of a point.
+  Example: points.history 345@global`,
+  "points.signal": `points.signal [pointId] [userId] [transferType] [data]
+  → Send a signal/message.
+  Example: points.signal 345@global - broadcast {"text":"hello"}`,
+  "points.fileSignal": `points.fileSignal [pointId] [userId] [transferType] [data]
+  → Send a signal carrying file/entity metadata.
+  Example: points.fileSignal 345@global 123@global single {"fileId":"789@global"}`,
+  "points.paidSignal": `points.paidSignal [pointId] [userId] [transferType] [data] [lockId]
+  → Send a paid signal bound to a lock id.
+  Example: points.paidSignal 345@global 123@global single {"task":"run"} 4f0f02a8d0`,
+  "points.addMember": `points.addMember [userId] [pointId] [metadata]
+  → Add user membership to a point.
+  Example: points.addMember 123@global 345@global {"role":"teacher"}`,
+  "points.updateMember": `points.updateMember [userId] [pointId] [metadata]
+  → Update a user's point membership metadata.
+  Example: points.updateMember 123@global 345@global {"role":"moderator"}`,
+  "points.removeMember": `points.removeMember [userId] [pointId]
+  → Revoke a user membership from a point.
+  Example: points.removeMember 123@global 345@global`,
+  "points.listMembers": `points.listMembers [pointId]
+  → List members in a point.
+  Example: points.listMembers 345@global`,
+  "points.addMachine": `points.addMachine [pointId] [appId] [machineId]
+  → Attach a machine to a point.
+  Example: points.addMachine 345@global 984@global 876@global`,
+  "invites.create": `invites.create [pointId] [userId]
+  → Invite a user to a point.
+  Example: invites.create 345@global 123@global`,
+  "invites.cancel": `invites.cancel [pointId] [userId]
+  → Cancel a previously sent invitation.
+  Example: invites.cancel 345@global 123@global`,
+  "invites.accept": `invites.accept [pointId]
+  → Accept a point invitation.
+  Example: invites.accept 345@global`,
+  "invites.decline": `invites.decline [pointId]
+  → Decline a point invitation.
+  Example: invites.decline 345@global`,
+  "storage.upload": `storage.upload [pointId] [filePath] [optional fileId]
+  → Upload a file to a point.
+  Example: storage.upload 345@global ./book.pdf`,
+  "storage.uploadUserEntity": `storage.uploadUserEntity [entityId] [filePath] [optional machineId]
+  → Upload a user-scoped entity file.
+  Example: storage.uploadUserEntity avatar-v1 ./avatar.png`,
+  "storage.download": `storage.download [pointId] [fileId]
+  → Download a file from a point.
+  Example: storage.download 345@global 789@global`,
+  "chains.create": `chains.create [participants stakes json] [isTemporary]
+  → Create a workchain.
+  Example: chains.create {"123.124.125.126":1600} false`,
+  "chains.submitBaseTrx": `chains.submitBaseTrx [chainId] [key] [payload]
+  → Submit a base transaction on-chain.
+  Example: chains.submitBaseTrx 1 /points/create {"isPublic":true,"persHist":true,"orig":"global"}`,
+  "chains.registerNode": `chains.registerNode [origin]
+  → Register current node on a chain origin.
+  Example: chains.registerNode global`,
+  "machines.createApp": `machines.createApp [chainId] [username] [title] [desc]
+  → Create a new app on a workchain.
+  Example: machines.createApp 1 calcapp Calculator "simple calc app"`,
+  "machines.createMachine": `machines.createMachine [username] [appId] [path] [runtime] [comment]
+  → Create a machine under an app.
+  Example: machines.createMachine calculator 984@global /api/sum wasm "sum machine"`,
+  "machines.deleteMachine": `machines.deleteMachine [machineId]
+  → Delete an existing machine.
+  Example: machines.deleteMachine 876@global`,
+  "machines.updateMachine": `machines.updateMachine [machineId] [path] [metadataJsonOrFilePath] [optional promptFile]
+  → Update machine route path and metadata.
+  Example: machines.updateMachine 876@global /api/sum '{"public":{"profile":{"title":"Calc"}}}'`,
+  "machines.deploy": `machines.deploy [machineId] [machineFolderPath] [runtime] [metadata]
+  → Deploy project code as machine.
+  Example: machines.deploy 876@global ./calculator-proj wasm {}`,
+  "machines.runMachine": `machines.runMachine [machineId]
+  → Start/run a deployed machine.
+  Example: machines.runMachine 876@global`,
+  "machines.listApps": `machines.listApps [offset] [count]
+  → List created apps with pagination.
+  Example: machines.listApps 0 15`,
+  "machines.listMachines": `machines.listMachines [offset] [count]
+  → List created machines with pagination.
+  Example: machines.listMachines 0 15`,
+  "pc.runPc": `pc.runPc
+  → Create a cloud Linux PC micro-VM.
+  Example: pc.runPc`,
+};
+
+const fullHelp = `Decillion AI CLI – Command Reference
 For full documentation, visit: https://decillionai.com/docs/cli
 
-[Authentication & Users]
+${Object.values(helpEntries).join("\n\n")}
 
-  login [username]
-    → Log into your account.
-      - The username is permanent and cannot be changed once set.
-      - Example: login alice123
+help [optional command]
+  → Show full help or command-specific help.
+  Example1: help
+  Example2: help points.signal
 
-  users.get [userId]
-    → Get data for a specific user by ID.
-      - Example: users.get 123@global
-
-  users.lockToken [amount] [type] [target]
-    → lock some tokens with specific amount to spend in different use cases such as paying bots, machines and on-chain transactions.
-      - amount: the amount of tokens which will be spent and paid
-      - type: type of use case in which the token will be spent. currently 2 types are supported:
-        1. exec: for paying applet on-chain execution
-        2. pay: to pay an applet to run off-chain
-      - target: if type is "exec" then target should be a json string showing an array of validator nodes' ids. otherwise if type is "pay" the target should be the receiver userId who is the machine to be executed or the owner of that machine
-      - Example1: users.lockToken 50 exec 123@global
-      - Example2: users.lockToken 100 pay 145@global
-
-  users.me
-    → Get your own user profile and metadata.
-
-  users.list [offset] [count]
-    → List users in paginated format.
-      - offset: number to skip (e.g., 0)
-      - count: number to fetch (e.g., 10)
-      - Example: users.list 0 10
-
-
-[Points]
-
-  points.create [isPublic] [hasPersistentHistory] [origin] [metadata]
-    → Create a new point with the given configuration.
-      - isPublic: true/false — should the point be public?
-      - hasPersistentHistory: true/false — should it retain history?
-      - origin: e.g., "global" — namespace of the point
-      - metadata: a json string. "title" and "avatar" are necessary fields. e.g., "{ 'public': { 'profile': { 'title': 'test room', 'avatar': '123' } } }"
-      - Example: points.create true true global
-
-  points.update [pointId] [isPublic] [hasPersistentHistory]
-    → Update visibility and history settings for a point.
-      - Example: points.update 345@global false true
-
-  points.get [pointId]
-    → Retrieve details of a specific point.
-      - Example: points.get 345@global
-
-  points.delete [pointId]
-    → Delete a point by ID.
-      - Example: points.delete 345@global
-
-  points.join [pointId]
-    → Join a public point by ID.
-      - Example: points.join 345@global
-
-  points.myPoints [offset] [count] [origin]
-    → List your own points in a specific origin.
-      - offset: skip count (e.g., 0)
-      - count: number of results (e.g., 10)
-      - origin: optional filter like "global"
-      - Example: points.myPoints 0 10 global
-
-  points.list [offset] [count]
-    → List all public points with pagination.
-      - Example: points.list 0 10
-
-  points.signal [pointId] [userId] [transferType] [data]
-    → Send a signal/message in a point or specific user.
-      - userId: recipient (e.g., 123@global), or "-" for broadcast
-      - pointId: point to send to (e.g., 345@global), or "-" for single
-      - transferType: message type (e.g., single, broadcast)
-      - data: JSON or string payload
-      - Example 1: points.signal - 123@global single {"text": "Hello!"}
-      - Example 2: points.signal 345@global - broadcast {"text": "Hello! World"}
-  
-  points.addMember [userId] [pointId] [metadata]
-    → Add a user to one of your adminstrated points.
-      - userId: id of the user you want to add to the point
-      - pointId: id of the point in which you are admin and wanna add the user to it as member
-      - metadata: a json string which will be attached to membership for future usage
-      - Example: points.addMember 123@global 345@global { "role": "teacher" }
-  
-  points.updateMember [userId] [pointId] [metadata]
-    → Update a user membership who was added to one of your adminstrated points previously.
-      - userId: id of the member user in the point
-      - pointId: id of the point in which you've added the user as member, previously
-      - metadata: a json string which will be attached to membership for future usage
-      - Example: points.updateMember 123@global 345@global { "role": "teacher" }
-  
-  points.removeMember [userId] [pointId]
-    → Revoke a user membership who was added to one of your adminstrated points previously.
-      - userId: id of the member user in the point
-      - pointId: id of the point in which you've added the user as member, previously
-      - Example: points.removeMember 123@global 345@global
-
-  points.listMembers [userId] [pointId]
-    → Get a list of members in a point which you have access to as member or admin.
-      - pointId: id of the point which you want to get its members list
-      - Example: points.listMembers 345@global
-
-[Invites]
-
-  invites.create [pointId] [userId]
-    → Invite a user to a point in which you are admin.
-      - pointId: id of the point which you want to invite the user to it
-      - userId: id of the user you want to invite to your point
-      - Example: invites.create 345@global 123@global
-
-  invites.cancel [pointId] [userId]
-    → Cancel a point invitation previously sent to a user.
-      - pointId: id of the point which you have invited the user to it
-      - userId: id of the user whom you have invited to your point
-      - Example: invites.cancel 345@global 123@global
-
-  invites.accept [pointId]
-    → Accept a point invitation which you have received.
-      - pointId: id of the point which you have received the invitation from it.
-      - Example: invites.accept 345@global
-
-  invites.decline [pointId]
-    → Decline a point invitation which you have received.
-      - pointId: id of the point which you have received the invitation from it.
-      - Example: invites.decline 345@global
-
-[Storage]
-
-  storage.upload [pointId] [filePath] [optional param: fileId]
-    → Upload a file from your local file system to the cloud.
-      - pointId: id of the point which you want to upload the file to it
-      - filePath: path of file which you want to upload.
-      - fileId (optional): an optional parameter which is not necessery to be set in all cases. you can set it to append this file payload to another existing file in the cloud
-      - Example1: storage.upload 345@global /home/user/desktop/book.pdf
-      - Example2: storage.upload 345@global /home/user/desktop/book.pdf 789@global
-
-  storage.download [pointId] [fileId]
-    → Download a file from a point you have access to it, to your local device.
-      - pointId: id of the point which you want to download the file from it
-      - fileId: id of the file you want to download from the point
-      - Example: storage.download 345@global 789@global
-  
-[Chains]
-
-  chains.create [participants stakes] [isTemporary]
-    → Create a new workchain. it can be a temporary chain for private temporary and limited time use cases or a fixed workchain as a new branch in system customized for new use case.
-      - participants: a json string showing all participants in this chain based on their node ip address and the stake each of them wanna share in the consensus
-      - isTemporary: a boolean specifying wether the chain is temporary and will be disabled after some time or not
-      - Example: chains.create { "123.124.125.126": 1600, "127.128.129.120": 1500 } false
-  
-  chains.submitBaseTrx [chainId] [key] [payload]
-    → Submit a new base transaction on-chain. base transactions include the basic actions on this system sucn as points actions, machines and apps creations and deploying, invitation actions, storage actions and other actions which can also be done through this CLI.
-      - chainId: id of the workchain in which you wanna submit the transaction
-      - key: the action key (api path) you wanna execute on-chain
-      - payload: a json string containing the input values of the action to be executed
-      - Example: chains.submitBaseTrx 1 /points/create { "isPublic": true, "persHist": true, "orig": "global" }
-
-[Pc]
-
-  pc.runPc
-    → Create a new linux cloud pc micro virtual machine for different use cases.
-      - Example: pc.runPc
-  
-  pc.execCommand [vmId] [command]
-    → execute a command in cloud pc terminal
-      - vmId: the id of cloud pc returned by pc.runPc
-      - command: the command you want to execute on cloud pc
-      - Example: pc.execCommand 82855778-6cc7-4d3a-84d8-5c57749275f5@172.77.5.1 "mkdir test"
-
-[Machines]
-
-  machines.createApp [chainId]
-    → create a new Dapp on the platform on a specific workchain
-      - chainId: the workchain you want to crate app on it
-      - Example: machines.createApp 1
-
-  machines.createMachine [username] [appId] [path]
-    → create a new Dapp on the platform on a specific workchain
-      - username: the username of the machine you want to create. machines are treated same as users on this platform so they must have a unique username
-      - appId: id of the app you want to link this machine to. machines linked to same app has access to same state and storage
-      - path: the path of the function of the machine
-      - Example: machines.createApp calculator 984@global /api/sum
-
-  machines.deploy [machineId] [machine folder path] [runtime] [metadata]
-    → deploy a project as machine on the platform specifying its runtime type
-      - machineId: id of the machine you want to deploy the project on. this project code will function as this machine
-      - machine folder path: the path of the folder of the project you want to deploy which is located on your local filesystem
-      - runtime: the runtime type of the machine you want to deploy. it can be one of these types:
-        1.wasm
-        2.elpis
-        3.docker
-      - metadata: a json string specifying addition metadata of the deploy action. if the runtime type is docker it must be:
-        { "imageName": "[Docker image name you wanna create and link to this machine]" }
-      - Example1: machines.deploy 876@global /home/ubuntu/calculator-proj wasm {}
-      - Example2: machines.deploy 876@global /home/ubuntu/deepseek-docker-proj docker { "imageName": "ollama-deepseek" }
-
-  machines.listApps [offset] [count]
-    → get a paginated list of apps already created on this platform.
-      - Example: machines.listApps 0 15
-  
-  machines.listMachines [offset] [count]
-    → get a paginated list of machines already created on this platform.
-      - Example: machines.listMachines 0 15
-
-For more details, visit: https://decillionai.com/docs/cli
+Non-interactive mode:
+  1) Single command: decillion <command> [args...]
+     Example: decillion users.me
+  2) Batch inline: decillion --batch "users.me; users.list 0 10"
+  3) Batch file: decillion --batch-file ./commands.txt
 `;
+
+
+function parseCommandParts(str: string): string[] {
+  let parts: string[] = [];
+  let inVal = false;
+  let valEdge = '';
+  let temp = '';
+  for (let i = 0; i < str.length; i++) {
+    if (inVal) {
+      if (str[i] === valEdge) {
+        inVal = false;
+        valEdge = '';
+      } else {
+        temp += str[i];
+      }
+    } else {
+      if (str[i] === '\'' || str[i] === '"') {
+        inVal = true;
+        valEdge = str[i];
+      } else if (str[i] === ' ') {
+        if (temp !== '') {
+          parts.push(temp);
+          temp = '';
+        }
+      } else {
+        temp += str[i];
+      }
+    }
+  }
+  if (temp !== '') {
+    parts.push(temp);
+  }
+  return parts;
+}
+
+async function runParsedCommand(parts: string[]): Promise<number> {
+  if (parts.length === 0) return 0;
+  if (parts.length === 1 && parts[0] === 'help') {
+    console.log(fullHelp);
+    return 0;
+  }
+  if (parts.length === 2 && parts[0] === 'help') {
+    let itemHelp = helpEntries[parts[1]];
+    if (itemHelp) {
+      console.log(itemHelp + "\n");
+      return 0;
+    }
+    console.log(`help not found for command: ${parts[1]}`);
+    return 1;
+  }
+  if (parts.length === 1 && parts[0] === 'clear') {
+    console.clear();
+    return 0;
+  }
+  let fn = commands[parts[0]];
+  if (fn !== undefined) {
+    let res = await fn(parts.slice(1));
+    if (res.resCode == 0) {
+      console.log(res.obj);
+      return 0;
+    }
+    console.log("Error: ", res.obj);
+    return res.resCode;
+  }
+  console.log("command not detected.");
+  return 1;
+}
+
+function commandRequiresAuth(command: string): boolean {
+  return command !== "login" && command !== "help" && command !== "clear";
+}
+
+async function runNonInteractive(argv: string[]): Promise<number> {
+  await app.connectTransport();
+
+  let batches: string[] = [];
+  if (argv[0] === "--batch") {
+    const raw = argv.slice(1).join(" ").trim();
+    batches = raw.split(";").map((x) => x.trim()).filter((x) => x.length > 0);
+  } else if (argv[0] === "--batch-file" && argv[1]) {
+    const raw = fs.readFileSync(argv[1], { encoding: "utf-8" });
+    batches = raw
+      .split("\n")
+      .map((x) => x.trim())
+      .filter((x) => x.length > 0 && !x.startsWith("#"));
+  } else {
+    batches = [argv.join(" ").trim()];
+  }
+
+  for (let i = 0; i < batches.length; i++) {
+    const parts = parseCommandParts(batches[i]);
+    if (parts.length === 0) continue;
+
+    if (commandRequiresAuth(parts[0])) {
+      if (!app.hasCredentials()) {
+        console.log('Error: not authenticated. Please login first using: login [username]');
+        return 10;
+      }
+      const auth = await app.authenticateSession();
+      if (auth.resCode !== 0) {
+        console.log('Error: authentication failed. Please login again with: login [username]');
+        console.log(auth.obj);
+        return auth.resCode;
+      }
+    }
+
+    const code = await runParsedCommand(parts);
+    if (code !== 0) return code;
+  }
+  return 0;
+}
 
 let ask = () => {
   rl.question(`${app.myUsername()}$ `, async (q) => {
     let str = q.trim();
-    let parts: string[] = [];
-    let inVal = false;
-    let valEdge = '';
-    let temp = '';
-    for (let i = 0; i < str.length; i++) {
-      if (inVal) {
-        if (str[i] === valEdge) {
-          inVal = false;
-          valEdge = '';
-        } else {
-          temp += str[i];
-        }
-      } else {
-        if (str[i] === '\'' || str[i] === '\"') {
-          inVal = true;
-          valEdge = str[i];
-        } else if (str[i] === ' ') {
-          parts.push(temp);
-          temp = '';
-        } else {
-          temp += str[i];
-        }
-      }
-    }
-    if (temp !== '') {
-      parts.push(temp);
-    }
+    let parts = parseCommandParts(str);
     if (pcId) {
       let command = q.trim();
       if (parts.length == 2 && parts[0] === "pc" && parts[1] == "stop") {
@@ -1935,38 +2364,8 @@ let ask = () => {
       }
       return;
     }
-    if (parts.length == 1) {
-      if (parts[0] == "clear") {
-        console.clear();
-        console.log(
-          'Welcome to Decillion AI shell, enter your command or enter "help" to view commands instructions: \n'
-        );
-        setTimeout(() => {
-          ask();
-        });
-        return;
-      } else if (parts[0] == "help") {
-        console.log(help);
-        console.log(
-          'Welcome to Decillion AI shell, enter your command or enter "help" to view commands instructions: \n'
-        );
-        setTimeout(() => {
-          ask();
-        });
-        return;
-      }
-    }
-    let fn = commands[parts[0]];
-    if (fn !== undefined) {
-      let res = await fn(parts.slice(1));
-      if (res.resCode == 0) {
-        console.log(res.obj);
-      } else {
-        console.log("Error: ", res.obj);
-      }
-    } else {
-      console.log("command not detected.");
-    }
+
+    await runParsedCommand(parts);
     setTimeout(() => {
       ask();
     });
@@ -1975,6 +2374,11 @@ let ask = () => {
 
 (async () => {
   console.clear();
+  const argv = process.argv.slice(2);
+  if (argv.length > 0) {
+    const code = await runNonInteractive(argv);
+    process.exit(code);
+  }
   await app.connect();
   console.log(
     'Welcome to Decillion AI shell, enter your command or enter "help" to view commands instructions: \n'
