@@ -13,6 +13,8 @@ The CLI is aligned with the current backend model:
 
 ---
 
+> Protocol update note: the backend model now centers on **creatures + programs + stores(spaces)**. Legacy command families (`users`, `points`, `apps`, `machines`) are kept in CLI for compatibility and internally routed to the new endpoint layout.
+
 ## Global usage
 
 ```bash
