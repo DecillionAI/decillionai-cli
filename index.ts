@@ -296,7 +296,7 @@ class Decillion {
     if (authRes.resCode !== 0) {
       return authRes;
     }
-    const meRes = await this.users.me();
+    const meRes = await this.creatures.me();
     if (meRes.resCode !== 0) {
       return meRes;
     }
@@ -315,7 +315,7 @@ class Decillion {
 
         const idToken = req.body.idToken;
 
-        let res = await this.sendRequest("", "/users/login", {
+        let res = await this.sendRequest("", "/creatures/login", {
           username: this.pendingUsername,
           emailToken: idToken,
           metadata: {
@@ -350,7 +350,7 @@ class Decillion {
             }),
           ]);
           await this.authenticate();
-          this.username = (await this.users.me()).obj.user.username;
+          this.username = (await this.creatures.me()).obj.user.username;
         }
         console.log("Login successfull");
         if (this.loginServer) {
@@ -395,7 +395,7 @@ class Decillion {
         obj: { message: USER_ID_NOT_SET_ERR_MSG },
       };
     }
-    return await this.sendRequest(this.userId, "authenticate", {});
+    return await this.sendRequest(this.userId, "/creatures/authenticate", {});
   }
   public logout() {
     if (fs.existsSync("auth/userId.txt")) fs.rmSync("auth/userId.txt");
@@ -445,7 +445,7 @@ class Decillion {
     );
     return await res.text();
   }
-  public users = {
+  public creatures = {
     get: async (userId: string): Promise<{ resCode: number; obj: any }> => {
       if (!this.userId) {
         return {
@@ -453,7 +453,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/get", {
+      return await this.sendRequest(this.userId, "/creatures/get", {
         userId: userId,
       });
     },
@@ -464,7 +464,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      let res = await this.sendRequest(this.userId, "/users/lockToken", {
+      let res = await this.sendRequest(this.userId, "/creatures/lockToken", {
         amount: amount,
         type: type,
         target: target
@@ -481,12 +481,12 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/consumeLock", {
+      return await this.sendRequest(this.userId, "/creatures/consumeLock", {
         amount: amount,
         type: type,
         lockId: lockId,
         signature: this.sign(Buffer.from(lockId)),
-        userid: this.userId
+        userId: this.userId
       });
     },
     me: async (): Promise<{ resCode: number; obj: any }> => {
@@ -496,7 +496,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/get", {
+      return await this.sendRequest(this.userId, "/creatures/get", {
         userId: this.userId,
       });
     },
@@ -510,7 +510,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/list", {
+      return await this.sendRequest(this.userId, "/creatures/list", {
         offset: offset,
         count: count,
       });
@@ -525,7 +525,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/transfer", {
+      return await this.sendRequest(this.userId, "/creatures/transfer", {
         toUsername,
         amount,
       });
@@ -540,7 +540,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/mint", {
+      return await this.sendRequest(this.userId, "/creatures/mint", {
         toUserEmail,
         amount,
       });
@@ -556,14 +556,36 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/checkSign", {
+      return await this.sendRequest(this.userId, "/creatures/checkSign", {
         userId,
         payload,
         signature,
       });
     },
+    signal: async (
+      creatureId: string,
+      programId: string,
+      entity: string,
+      data: string,
+      storeId?: string,
+      temp?: boolean
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/creatures/signal", {
+        type: "pvp",
+        creatureId,
+        storeId,
+        temp,
+        data: JSONbig.stringify({ programId, entity, payload: data }),
+      });
+    },
     create: async (payload: any): Promise<{ resCode: number; obj: any }> => {
-      return await this.sendRequest("", "/users/create", payload);
+      return await this.sendRequest("", "/creatures/create", payload);
     },
     delete: async (payload: any): Promise<{ resCode: number; obj: any }> => {
       if (!this.userId) {
@@ -572,7 +594,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/delete", payload);
+      return await this.sendRequest(this.userId, "/creatures/delete", payload);
     },
     update: async (payload: any): Promise<{ resCode: number; obj: any }> => {
       if (!this.userId) {
@@ -581,7 +603,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/update", payload);
+      return await this.sendRequest(this.userId, "/creatures/update", payload);
     },
     meta: async (userId: string): Promise<{ resCode: number; obj: any }> => {
       if (!this.userId) {
@@ -590,7 +612,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/meta", { userId });
+      return await this.sendRequest(this.userId, "/creatures/meta", { userId });
     },
     getByUsername: async (
       username: string
@@ -601,7 +623,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/getByUsername", { username });
+      return await this.sendRequest(this.userId, "/creatures/getByUsername", { username });
     },
     find: async (
       offset: number,
@@ -614,7 +636,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/find", { offset, count, query });
+      return await this.sendRequest(this.userId, "/creatures/find", { offset, count, query });
     },
     authenticate: async (): Promise<{ resCode: number; obj: any }> => {
       if (!this.userId) {
@@ -623,489 +645,95 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/users/authenticate", {});
+      return await this.sendRequest(this.userId, "/creatures/authenticate", {});
     },
   };
-  public points = {
-    create: async (
-      isPublic: boolean,
-      persHist: boolean,
-      origin: string,
-      metadata: { [key: string]: any }
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/create", {
-        isPublic: isPublic,
-        persHist: persHist,
-        orig: origin,
-        metadata,
-        tag: 'group'
-      });
-    },
-    update: async (
-      pointId: string,
-      isPublic: boolean,
-      persHist: boolean
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/update", {
-        pointId: pointId,
-        isPublic: isPublic,
-        persHist: persHist,
-      });
-    },
-    delete: async (pointId: string): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/delete", {
-        pointId: pointId,
-      });
-    },
-    get: async (pointId: string): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/get", {
-        pointId: pointId,
-        includeMeta: true,
-      });
-    },
-    myPoints: async (
-      offset: number,
-      count: number,
-      tag: string,
-      orig: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/read", {
-        offset: offset,
-        count: count,
-        tag: tag,
-        orig: orig,
-      });
-    },
-    list: async (
-      offset: number,
-      count: number
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/list", {
-        offset: offset,
-        count: count,
-      });
-    },
-    join: async (pointId: string): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/join", {
-        pointId: pointId,
-      });
-    },
-    history: async (
-      pointId: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/history", {
-        pointId: pointId,
-      });
-    },
-    signal: async (
-      pointId: string,
-      userId: string,
-      typ: string,
-      data: string,
-      lockId?: string,
-      isTemp?: boolean,
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      if (lockId) {
-        let m = JSONbig.parse(data);
-        m["paymentLockId"] = lockId;
-        m["lockSignature"] = this.sign(Buffer.from(lockId));
-        let newData = JSONbig.stringify(m);
-        this.sendRequest(this.userId, "/points/signal", {
-          pointId: pointId,
-          userId: userId,
-          type: typ,
-          data: newData,
-          temp: isTemp
-        });
-      } else {
-        this.sendRequest(this.userId, "/points/signal", {
-          pointId: pointId,
-          userId: userId,
-          type: typ,
-          data: data,
-          temp: isTemp
-        });
-      }
+  private miniappTarget(key: string): { creatureId: string; programId: string; entityId: string; storeId?: string } | undefined {
+    const prefix = `DECILLION_${key.toUpperCase()}`;
+    const creatureId = process.env[`${prefix}_CREATURE_ID`];
+    const programId = process.env[`${prefix}_PROGRAM_ID`];
+    const entityId = process.env[`${prefix}_ENTITY`] ?? "main";
+    const storeId = process.env[`${prefix}_STORE_ID`];
+    if (!creatureId || !programId) return undefined;
+    return { creatureId, programId, entityId, storeId };
+  }
+
+  private async signalMiniapp(key: string, action: string, payload: any, temp = false): Promise<{ resCode: number; obj: any }> {
+    if (!this.userId) {
       return {
-        resCode: 0,
-        obj: { message: "job created" },
+        resCode: USER_ID_NOT_SET_ERR_CODE,
+        obj: { message: USER_ID_NOT_SET_ERR_MSG },
       };
-    },
-    addMachine: async (
-      pointId: string,
-      appId: string,
-      machineId: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/addMachine", {
-        pointId: pointId,
-        appId: appId,
-        machineMeta: { machineId: machineId, identifier: '0', metadata: {}, access: { "sendSignal": true } },
-      });
-    },
-    addMember: async (
-      userId: string,
-      pointId: string,
-      metadata: { [key: string]: any }
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/addMember", {
-        pointId: pointId,
-        userId: userId,
-        metadata: metadata,
-      });
-    },
-    updateMember: async (
-      userId: string,
-      pointId: string,
-      metadata: { [key: string]: any }
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/updateMember", {
-        pointId: pointId,
-        userId: userId,
-        metadata: metadata,
-      });
-    },
-    removeMember: async (
-      userId: string,
-      pointId: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/removeMember", {
-        pointId: pointId,
-        userId: userId,
-      });
-    },
-    listMembers: async (
-      pointId: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/readMembers", {
-        pointId,
-      });
-    },
-    leave: async (pointId: string): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/leave", { pointId });
-    },
-    addApp: async (payload: any): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/addApp", payload);
-    },
-    listApps: async (payload: any): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/listApps", payload);
-    },
-    updateMachine: async (
-      payload: any
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/updateMachine", payload);
-    },
-    removeApp: async (
-      payload: any
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/removeApp", payload);
-    },
-    removeMachine: async (
-      payload: any
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/removeMachine", payload);
-    },
-    updateMemberAccess: async (
-      payload: any
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/updateMemberAccess", payload);
-    },
-    updateMachineAccess: async (
-      payload: any
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/updateMachineAccess", payload);
-    },
-    getDefaultAccess: async (
-      payload: any
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/getDefaultAccess", payload);
-    },
-    meta: async (pointId: string): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/points/meta", { pointId });
-    },
+    }
+    const target = this.miniappTarget(key);
+    if (!target) {
+      return {
+        resCode: 31,
+        obj: {
+          message: `miniapp target is not configured: set DECILLION_${key.toUpperCase()}_CREATURE_ID and DECILLION_${key.toUpperCase()}_PROGRAM_ID`,
+        },
+      };
+    }
+    const data = JSONbig.stringify({ action, programId: target.programId, entity: target.entityId, payload });
+    return this.creatures.signal(target.creatureId, target.programId, target.entityId, data, target.storeId, temp);
+  }
+
+  public points = {
+    create: async (isPublic: boolean, persHist: boolean, origin: string, metadata: { [key: string]: any }) =>
+      this.signalMiniapp("stores", "create", { isPublic, persHist, origin, metadata }),
+    update: async (pointId: string, isPublic: boolean, persHist: boolean) =>
+      this.signalMiniapp("stores", "update", { storeId: pointId, isPublic, persHist }),
+    delete: async (pointId: string) => this.signalMiniapp("stores", "delete", { storeId: pointId }),
+    get: async (pointId: string) => this.signalMiniapp("stores", "get", { storeId: pointId }),
+    myPoints: async (offset: number, count: number, tag: string, orig: string) =>
+      this.signalMiniapp("stores", "read", { offset, count, tag, orig }),
+    list: async (offset: number, count: number) => this.signalMiniapp("stores", "list", { offset, count }),
+    join: async (pointId: string) => this.signalMiniapp("stores", "join", { storeId: pointId }),
+    history: async (pointId: string) => this.signalMiniapp("stores", "history", { storeId: pointId }),
+    signal: async (pointId: string, userId: string, typ: string, data: string, lockId?: string, isTemp?: boolean) =>
+      this.signalMiniapp("stores", "signal", { storeId: pointId, userId, type: typ, data, lockId }, !!isTemp),
+    addMachine: async (pointId: string, appId: string, machineId: string) =>
+      this.signalMiniapp("stores", "addProgram", { storeId: pointId, creatureId: appId, programId: machineId }),
+    addMember: async (userId: string, pointId: string, metadata: { [key: string]: any }) =>
+      this.signalMiniapp("stores", "addMember", { storeId: pointId, userId, metadata }),
+    updateMember: async (userId: string, pointId: string, metadata: { [key: string]: any }) =>
+      this.signalMiniapp("stores", "updateMember", { storeId: pointId, userId, metadata }),
+    removeMember: async (userId: string, pointId: string) =>
+      this.signalMiniapp("stores", "removeMember", { storeId: pointId, userId }),
+    listMembers: async (pointId: string) => this.signalMiniapp("stores", "readMembers", { storeId: pointId }),
+    leave: async (pointId: string) => this.signalMiniapp("stores", "leave", { storeId: pointId }),
+    addApp: async (payload: any) => this.signalMiniapp("stores", "addCreature", payload),
+    listApps: async (payload: any) => this.signalMiniapp("stores", "listCreatures", payload),
+    updateMachine: async (payload: any) => this.signalMiniapp("stores", "updateProgram", payload),
+    removeApp: async (payload: any) => this.signalMiniapp("stores", "removeCreature", payload),
+    removeMachine: async (payload: any) => this.signalMiniapp("stores", "removeProgram", payload),
+    updateMemberAccess: async (payload: any) => this.signalMiniapp("stores", "updateMemberAccess", payload),
+    updateMachineAccess: async (payload: any) => this.signalMiniapp("stores", "updateProgramAccess", payload),
+    getDefaultAccess: async (payload: any) => this.signalMiniapp("stores", "getDefaultAccess", payload),
+    meta: async (pointId: string) => this.signalMiniapp("stores", "meta", { storeId: pointId }),
   };
+  public stores = this.points;
+
   public invites = {
-    create: async (
-      pointId: string,
-      userId: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/invites/create", {
-        pointId: pointId,
-        userId: userId,
-      });
-    },
-    cancel: async (
-      pointId: string,
-      userId: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/invites/cancel", {
-        pointId: pointId,
-        userId: userId,
-      });
-    },
-    accept: async (pointId: string): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/invites/accept", {
-        pointId: pointId,
-      });
-    },
-    decline: async (
-      pointId: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/invites/decline", {
-        pointId: pointId,
-      });
-    },
-    listPointInvites: async (
-      pointId: string
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/invites/listPointInvites", { pointId });
-    },
-    listUserInvites: async (): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/invites/listUserInvites", {});
-    },
+    create: async (pointId: string, userId: string) => this.signalMiniapp("invites", "create", { storeId: pointId, userId }),
+    cancel: async (pointId: string, userId: string) => this.signalMiniapp("invites", "cancel", { storeId: pointId, userId }),
+    accept: async (pointId: string) => this.signalMiniapp("invites", "accept", { storeId: pointId }),
+    decline: async (pointId: string) => this.signalMiniapp("invites", "decline", { storeId: pointId }),
+    listPointInvites: async (pointId: string) => this.signalMiniapp("invites", "listPointInvites", { storeId: pointId }),
+    listUserInvites: async () => this.signalMiniapp("invites", "listUserInvites", {}),
   };
+
   public chains = {
-    create: async (
-      participants: { [key: string]: number },
-      isTemp: boolean
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/chains/create", {
-        participants: participants,
-        isTemp: isTemp,
-      });
-    },
-    submitBaseTrx: async (
-      chainId: BigInt,
-      key: string,
-      obj: any
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      let payload = this.stringToBytes(JSONbig.stringify(obj));
-      let signature = this.sign(payload);
-      return await this.sendRequest(this.userId, "/chains/submitBaseTrx", {
-        chainId: chainId,
-        key: key,
-        payload: payload,
-        signature: signature,
-      });
-    },
-    registerNode: async (
-      orig: string,
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/chains/registerNode", {
-        orig: orig,
-      });
-    },
-    createFromPoint: async (
-      pointId: string,
-      isTemp: boolean
-    ): Promise<{ resCode: number; obj: any }> => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/chains/createFromPoint", { pointId, isTemp });
-    },
+    create: async (participants: { [key: string]: number }, isTemp: boolean) =>
+      this.signalMiniapp("chains", "create", { participants, isTemp }),
+    submitBaseTrx: async (chainId: BigInt, key: string, obj: any) =>
+      this.signalMiniapp("chains", "submitBaseTrx", { chainId, key, payload: obj }),
+    registerNode: async (orig: string) => this.signalMiniapp("chains", "registerNode", { orig }),
+    createFromPoint: async (pointId: string, isTemp: boolean) =>
+      this.signalMiniapp("chains", "createFromPoint", { storeId: pointId, isTemp }),
   };
-  public machines = {
+
+  public programs = {
     createApp: async (
       chainId: string,
       username: string,
@@ -1118,9 +746,10 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/apps/create", {
-        chainId: chainId,
+      return await this.sendRequest(this.userId, "/creatures/create", {
+        type: "machine",
         username: username,
+        chainId: chainId,
         metadata: {
           'public': {
             'profile': {
@@ -1146,7 +775,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/machines/create", {
+      return await this.sendRequest(this.userId, "/programs/create", {
         username: username,
         appId: appId,
         path: path,
@@ -1164,8 +793,8 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/apps/deleteMachine", {
-        machineId: machineId,
+      return await this.sendRequest(this.userId, "/programs/delete", {
+        programId: machineId,
       });
     },
     updateMachine: async (
@@ -1183,8 +812,8 @@ class Decillion {
       if (promptFile) {
         metadata["prompt"] = fs.readFileSync(promptFile, { encoding: 'utf-8' });
       }
-      return await this.sendRequest(this.userId, "/apps/updateMachine", {
-        machineId: machineId,
+      return await this.sendRequest(this.userId, "/programs/update", {
+        programId: machineId,
         path: path,
         metadata: metadata
       });
@@ -1218,7 +847,7 @@ class Decillion {
         console.clear();
         console.log("starting docker build...");
       }
-      return await this.sendRequest(this.userId, "/machines/deploy", {
+      return await this.sendRequest(this.userId, "/programs/deploy", {
         machineId: machineId,
         byteCode: byteCode,
         runtime: runtime,
@@ -1234,8 +863,9 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/apps/runMachine", {
+      return await this.sendRequest(this.userId, "/programs/runEntity", {
         machineId: machineId,
+        entityId: "main",
       });
     },
     listApps: async (
@@ -1248,7 +878,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/apps/list", {
+      return await this.sendRequest(this.userId, "/creatures/list", {
         offset: offset,
         count: count,
       });
@@ -1263,7 +893,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/machines/list", {
+      return await this.sendRequest(this.userId, "/programs/list", {
         offset: offset,
         count: count,
       });
@@ -1275,7 +905,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/apps/deleteApp", { appId });
+      return await this.sendRequest(this.userId, "/creatures/delete", { creatureId: appId });
     },
     updateApp: async (payload: any): Promise<{ resCode: number; obj: any }> => {
       if (!this.userId) {
@@ -1284,7 +914,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/apps/updateApp", payload);
+      return await this.sendRequest(this.userId, "/creatures/update", payload);
     },
     myCreatedApps: async (
       offset: number,
@@ -1296,7 +926,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/apps/myCreatedApps", { offset, count });
+      return await this.sendRequest(this.userId, "/creatures/list", { offset, count });
     },
     signal: async (payload: any): Promise<{ resCode: number; obj: any }> => {
       if (!this.userId) {
@@ -1305,7 +935,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/machines/signal", payload);
+      return await this.sendRequest(this.userId, "/programs/signal", payload);
     },
     stopMachine: async (
       machineId: string
@@ -1316,7 +946,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/apps/stopMachine", { machineId });
+      return await this.sendRequest(this.userId, "/programs/stopEntity", { programId: machineId, entityId: "main" });
     },
     readBuildLogs: async (
       machineId: string
@@ -1327,7 +957,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/machines/readBuildLogs", { machineId });
+      return await this.sendRequest(this.userId, "/programs/readVmLogs", { vmId: machineId });
     },
     readMachineBuilds: async (
       machineId: string,
@@ -1340,7 +970,7 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/machines/readMachineBuilds", {
+      return await this.sendRequest(this.userId, "/programs/readBuilds", {
         machineId,
         offset,
         count,
@@ -1357,91 +987,30 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/machines/listAppMachines", { appId, offset, count });
+      return await this.sendRequest(this.userId, "/programs/listByCreature", { creatureId: appId });
     },
   };
   storage = {
     upload: async (pointId: string, data: Buffer, fileId?: string) => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/storage/upload", {
-        pointId: pointId,
-        data: data.toString("base64"),
-        fileId: fileId,
-      });
+      return this.signalMiniapp("storage", "upload", { storeId: pointId, data: data.toString("base64"), fileId });
     },
     uploadUserEntity: async (data: Buffer, entityId: string, machineId?: string) => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/storage/uploadUserEntity", {
-        machineId: machineId,
-        data: data.toString("base64"),
-        entityId: entityId,
-      });
+      return this.signalMiniapp("storage", "uploadCreatureEntity", { machineId, data: data.toString("base64"), entityId });
     },
     deleteUserEntity: async (entityId: string) => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/storage/deleteUserEntity", { entityId });
+      return this.signalMiniapp("storage", "deleteCreatureEntity", { entityId });
     },
     uploadPointEntity: async (pointId: string, entityId: string, data: Buffer) => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/storage/uploadPointEntity", {
-        pointId,
-        entityId,
-        data: data.toString("base64"),
-      });
+      return this.signalMiniapp("storage", "uploadStoreEntity", { storeId: pointId, entityId, data: data.toString("base64") });
     },
     uploadAppEntity: async (appId: string, entityId: string, data: Buffer) => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/storage/uploadAppEntity", {
-        appId,
-        entityId,
-        data: data.toString("base64"),
-      });
+      return this.signalMiniapp("storage", "uploadMachineEntity", { appId, entityId, data: data.toString("base64") });
     },
     deletePointEntity: async (pointId: string, entityId: string) => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/storage/deletePointEntity", { pointId, entityId });
+      return this.signalMiniapp("storage", "deleteStoreEntity", { storeId: pointId, entityId });
     },
   download: async (pointId: string, fileId: string) => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      let res = await this.sendRequest(this.userId, "/storage/download", {
-        pointId: pointId,
-        fileId: fileId,
-      });
+      let res = await this.signalMiniapp("storage", "download", { storeId: pointId, fileId });
       if (res.resCode === 0) {
         return new Promise((resolve, reject) => {
           fs.writeFile(
@@ -1458,25 +1027,19 @@ class Decillion {
   };
   pc = {
     runPc: async () => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/pc/runPc", {});
+      return this.signalMiniapp("pc", "run", {});
     },
     execCommand: async (vmId: string, command: string) => {
-      if (!this.userId) {
-        return {
-          resCode: USER_ID_NOT_SET_ERR_CODE,
-          obj: { message: USER_ID_NOT_SET_ERR_MSG },
-        };
-      }
-      return await this.sendRequest(this.userId, "/pc/execCommand", {
-        vmId: vmId,
-        command: command,
-      });
+      return this.signalMiniapp("pc", "exec", { vmId, command });
+    },
+  };
+  public miniapps = {
+    invites: this.invites,
+    storage: this.storage,
+    chains: this.chains,
+    pc: {
+      run: () => this.pc.runPc(),
+      exec: (vmId: string, command: string) => this.pc.execCommand(vmId, command),
     },
   };
 }
@@ -1545,23 +1108,23 @@ const commands: {
     console.log("");
     return { resCode: 0, obj: { message: "printed." } };
   },
-  "users.me": async (
+  "creatures.me": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 0) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return app.users.me();
+    return app.creatures.me();
   },
-  "users.get": async (
+  "creatures.get": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return app.users.get(args[0]);
+    return app.creatures.get(args[0]);
   },
-  "users.lockToken": async (
+  "creatures.lockToken": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1573,9 +1136,9 @@ const commands: {
         obj: { message: "invalid numeric value: amount --> " + args[0] },
       };
     }
-    return app.users.lockToken(Number(args[0]), args[1], args[2]);
+    return app.creatures.lockToken(Number(args[0]), args[1], args[2]);
   },
-  "users.consumeLock": async (
+  "creatures.consumeLock": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1587,9 +1150,9 @@ const commands: {
         obj: { message: "invalid numeric value: amount --> " + args[2] },
       };
     }
-    return app.users.consumeLock(args[0], args[1], Number(args[2]));
+    return app.creatures.consumeLock(args[0], args[1], Number(args[2]));
   },
-  "users.list": async (
+  "creatures.list": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 2) {
@@ -1607,9 +1170,17 @@ const commands: {
         obj: { message: "invalid numeric value: count --> " + args[1] },
       };
     }
-    return app.users.list(Number(args[0]), Number(args[1]));
+    return app.creatures.list(Number(args[0]), Number(args[1]));
   },
-  "points.create": async (
+  "creatures.signal": async (
+    args: string[]
+  ): Promise<{ resCode: number; obj: any }> => {
+    if (args.length !== 4 && args.length !== 5) {
+      return { resCode: 30, obj: { message: "invalid parameters count" } };
+    }
+    return app.creatures.signal(args[0], args[1], args[2], args[3], args.length === 5 ? args[4] : undefined);
+  },
+  "stores.create": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 4) {
@@ -1627,7 +1198,7 @@ const commands: {
         obj: { message: "unknown parameter value: persHist --> " + args[1] },
       };
     }
-    return await app.points.create(
+    return await app.stores.create(
       args[0] === "true",
       args[1] === "true",
       args[2],
@@ -1641,7 +1212,7 @@ const commands: {
       }
     );
   },
-  "points.update": async (
+  "stores.update": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1659,37 +1230,37 @@ const commands: {
         obj: { message: "unknown parameter value: persHist --> " + args[2] },
       };
     }
-    return await app.points.update(
+    return await app.stores.update(
       args[0],
       args[1] === "true",
       args[2] === "true"
     );
   },
-  "points.get": async (
+  "stores.get": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.get(args[0]);
+    return await app.stores.get(args[0]);
   },
-  "points.delete": async (
+  "stores.delete": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.delete(args[0]);
+    return await app.stores.delete(args[0]);
   },
-  "points.join": async (
+  "stores.join": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.join(args[0]);
+    return await app.stores.join(args[0]);
   },
-  "points.myPoints": async (
+  "stores.myPoints": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1707,14 +1278,14 @@ const commands: {
         obj: { message: "invalid numeric value: count --> " + args[1] },
       };
     }
-    return await app.points.myPoints(
+    return await app.stores.myPoints(
       Number(args[0]),
       Number(args[1]),
       "",
       args[2]
     );
   },
-  "points.list": async (
+  "stores.list": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 2) {
@@ -1732,41 +1303,41 @@ const commands: {
         obj: { message: "invalid numeric value: count --> " + args[1] },
       };
     }
-    return await app.points.list(Number(args[0]), Number(args[1]));
+    return await app.stores.list(Number(args[0]), Number(args[1]));
   },
-  "points.history": async (
+  "stores.history": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.history(args[0]);
+    return await app.stores.history(args[0]);
   },
-  "points.signal": async (
+  "stores.signal": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 4) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.signal(args[0], args[1], args[2], args[3]);
+    return await app.stores.signal(args[0], args[1], args[2], args[3]);
   },
-  "points.fileSignal": async (
+  "stores.fileSignal": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 4) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.signal(args[0], args[1], args[2], args[3]);
+    return await app.stores.signal(args[0], args[1], args[2], args[3]);
   },
-  "points.paidSignal": async (
+  "stores.paidSignal": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 5) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.signal(args[0], args[1], args[2], args[3], args[4]);
+    return await app.stores.signal(args[0], args[1], args[2], args[3], args[4]);
   },
-  "points.addMember": async (
+  "stores.addMember": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1778,9 +1349,9 @@ const commands: {
     } catch (ex) {
       return { resCode: 30, obj: { message: "invalid metadata json" } };
     }
-    return await app.points.addMember(args[0], args[1], metadata);
+    return await app.stores.addMember(args[0], args[1], metadata);
   },
-  "points.updateMember": async (
+  "stores.updateMember": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1792,31 +1363,31 @@ const commands: {
     } catch (ex) {
       return { resCode: 30, obj: { message: "invalid metadata json" } };
     }
-    return await app.points.updateMember(args[0], args[1], metadata);
+    return await app.stores.updateMember(args[0], args[1], metadata);
   },
-  "points.removeMember": async (
+  "stores.removeMember": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 2) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.removeMember(args[0], args[1]);
+    return await app.stores.removeMember(args[0], args[1]);
   },
-  "points.listMembers": async (
+  "stores.listMembers": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.listMembers(args[0]);
+    return await app.stores.listMembers(args[0]);
   },
-  "points.addMachine": async (
+  "stores.addMachine": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.points.addMachine(args[0], args[1], args[2]);
+    return await app.stores.addMachine(args[0], args[1], args[2]);
   },
   "invites.create": async (
     args: string[]
@@ -1824,7 +1395,7 @@ const commands: {
     if (args.length !== 2) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.invites.create(args[0], args[1]);
+    return await app.miniapps.invites.create(args[0], args[1]);
   },
   "invites.cancel": async (
     args: string[]
@@ -1832,7 +1403,7 @@ const commands: {
     if (args.length !== 2) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.invites.cancel(args[0], args[1]);
+    return await app.miniapps.invites.cancel(args[0], args[1]);
   },
   "invites.accept": async (
     args: string[]
@@ -1840,7 +1411,7 @@ const commands: {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.invites.accept(args[0]);
+    return await app.miniapps.invites.accept(args[0]);
   },
   "invites.decline": async (
     args: string[]
@@ -1848,7 +1419,7 @@ const commands: {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.invites.decline(args[0]);
+    return await app.miniapps.invites.decline(args[0]);
   },
   "storage.upload": async (
     args: string[]
@@ -1857,9 +1428,9 @@ const commands: {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
     if (args.length === 2) {
-      return await app.storage.upload(args[0], fs.readFileSync(args[1]));
+      return await app.miniapps.storage.upload(args[0], fs.readFileSync(args[1]));
     } else {
-      return await app.storage.upload(
+      return await app.miniapps.storage.upload(
         args[0],
         fs.readFileSync(args[1]),
         args[2]
@@ -1873,9 +1444,9 @@ const commands: {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
     if (args.length == 2) {
-      return await app.storage.uploadUserEntity(fs.readFileSync(args[1]), args[0]);
+      return await app.miniapps.storage.uploadUserEntity(fs.readFileSync(args[1]), args[0]);
     } else {
-      return await app.storage.uploadUserEntity(fs.readFileSync(args[1]), args[0], args[2]);
+      return await app.miniapps.storage.uploadUserEntity(fs.readFileSync(args[1]), args[0], args[2]);
     }
   },
   "storage.download": async (
@@ -1884,7 +1455,7 @@ const commands: {
     if (args.length !== 2) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    await app.storage.download(args[0], args[1]);
+    await app.miniapps.storage.download(args[0], args[1]);
     return { resCode: 0, obj: { message: `file ${args[1]} downloaded.` } };
   },
   "chains.create": async (
@@ -1905,7 +1476,7 @@ const commands: {
         obj: { message: "unknown parameter value: isTemp --> " + args[1] },
       };
     }
-    return await app.chains.create(participants, args[1] == "true");
+    return await app.miniapps.chains.create(participants, args[1] == "true");
   },
   "chains.submitBaseTrx": async (
     args: string[]
@@ -1925,7 +1496,7 @@ const commands: {
     } catch (ex) {
       return { resCode: 30, obj: { message: "invalid object json" } };
     }
-    return await app.chains.submitBaseTrx(BigInt(args[0]), args[1], obj);
+    return await app.miniapps.chains.submitBaseTrx(BigInt(args[0]), args[1], obj);
   },
   "chains.registerNode": async (
     args: string[]
@@ -1933,33 +1504,34 @@ const commands: {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.chains.registerNode(args[0]);
+    return await app.miniapps.chains.registerNode(args[0]);
   },
-  "machines.createApp": async (
+  "creatures.createMachine": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 4) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.machines.createApp(args[0], args[1], args[2], args[3]);
+    return await app.programs.createApp(args[0], args[1], args[2], args[3]);
   },
-  "machines.createMachine": async (
+  "programs.create": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 5) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.machines.createMachine(args[0], args[1], args[2], args[3], args[4], "");
+    return await app.programs.createMachine(args[0], args[1], args[2], args[3], args[4], "");
   },
-  "machines.deleteMachine": async (
+  
+  "programs.delete": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.machines.deleteMachine(args[0]);
+    return await app.programs.deleteMachine(args[0]);
   },
-  "machines.updateMachine": async (
+  "programs.update": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3 && args.length !== 4) {
@@ -1976,12 +1548,12 @@ const commands: {
       }
     }
     if (args.length == 4) {
-      return await app.machines.updateMachine(args[0], args[1], metadata, args[3]);
+      return await app.programs.updateMachine(args[0], args[1], metadata, args[3]);
     } else {
-      return await app.machines.updateMachine(args[0], args[1], metadata);
+      return await app.programs.updateMachine(args[0], args[1], metadata);
     }
   },
-  "machines.deploy": async (
+  "programs.deploy": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 4) {
@@ -2002,24 +1574,24 @@ const commands: {
         files[item.name] = fs.readFileSync(`${args[1]}/src/${item.name}`).toString('base64');
       });
     metadata["files"] = files;
-    return await app.machines.deploy(
+    return await app.programs.deploy(
       args[0],
       bc.toString("base64"),
       args[2],
       metadata
     );
   },
-  "machines.runMachine": async (
+  "programs.run": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.machines.runMachine(
+    return await app.programs.runMachine(
       args[0],
     );
   },
-  "machines.listApps": async (
+  "creatures.listMachines": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 2) {
@@ -2037,9 +1609,9 @@ const commands: {
         obj: { message: "invalid numeric value: count --> " + args[1] },
       };
     }
-    return await app.machines.listApps(Number(args[0]), Number(args[1]));
+    return await app.programs.listApps(Number(args[0]), Number(args[1]));
   },
-  "machines.listMachines": async (
+  "programs.list": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 2) {
@@ -2057,16 +1629,18 @@ const commands: {
         obj: { message: "invalid numeric value: count --> " + args[1] },
       };
     }
-    return await app.machines.listMachines(Number(args[0]), Number(args[1]));
+    return await app.programs.listMachines(Number(args[0]), Number(args[1]));
   },
-  "pc.runPc": async (
+  
+  
+  "pc.run": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 0) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
     console.clear();
-    let res = await app.pc.runPc();
+    let res = await app.miniapps.pc.run();
     pcId = res.obj.vmId;
     return res;
   },
@@ -2085,69 +1659,72 @@ const helpEntries: { [key: string]: string } = {
   printPrivateKey: `printPrivateKey
   → Print your account private key in base64 body format.
   Example: printPrivateKey`,
-  "users.me": `users.me
-  → Get your own user profile and metadata.
-  Example: users.me`,
-  "users.get": `users.get [userId]
-  → Get data for a specific user by ID.
-  Example: users.get 123@global`,
-  "users.lockToken": `users.lockToken [amount] [type] [target]
+  "creatures.lockToken": `creatures.lockToken [amount] [type] [target]
   → Lock tokens for payment/execution use-cases.
-  Example: users.lockToken 100 pay 145@global`,
-  "users.consumeLock": `users.consumeLock [lockId] [type] [amount]
+  Example: creatures.lockToken 100 pay 145@global`,
+  "creatures.consumeLock": `creatures.consumeLock [lockId] [type] [amount]
   → Consume a previously created token lock and settle payment.
-  Example: users.consumeLock 4f0f02a8d0 pay 100`,
-  "users.list": `users.list [offset] [count]
-  → List users in paginated format.
-  Example: users.list 0 10`,
-  "points.create": `points.create [isPublic] [hasPersistentHistory] [origin] [title]
+  Example: creatures.consumeLock 4f0f02a8d0 pay 100`,
+  "creatures.me": `creatures.me
+  → Get your own creature profile.
+  Example: creatures.me`,
+  "creatures.get": `creatures.get [creatureId]
+  → Get data for a specific creature by ID.
+  Example: creatures.get 123@global`,
+  "creatures.list": `creatures.list [offset] [count]
+  → List creatures in paginated format.
+  Example: creatures.list 0 10`,
+  "creatures.signal": `creatures.signal [creatureId] [programId] [entity] [data] [optional storeId]
+  → Send a signal to a creature miniapp program/entity target.
+  Example: creatures.signal 123@global 456@global main '{"cmd":"ping"}'`,
+  "stores.create": `stores.create [isPublic] [hasPersistentHistory] [origin] [title]
   → Create a new point.
-  Example: points.create true true global study-room`,
-  "points.update": `points.update [pointId] [isPublic] [hasPersistentHistory]
+  Example: stores.create true true global study-room`,
+  "stores.update": `stores.update [pointId] [isPublic] [hasPersistentHistory]
   → Update visibility/history settings for a point.
-  Example: points.update 345@global false true`,
-  "points.get": `points.get [pointId]
+  Example: stores.update 345@global false true`,
+  "stores.get": `stores.get [pointId]
   → Retrieve details of a point.
-  Example: points.get 345@global`,
-  "points.delete": `points.delete [pointId]
+  Example: stores.get 345@global`,
+  "stores.delete": `stores.delete [pointId]
   → Delete a point.
-  Example: points.delete 345@global`,
-  "points.join": `points.join [pointId]
+  Example: stores.delete 345@global`,
+  "stores.join": `stores.join [pointId]
   → Join a public point.
-  Example: points.join 345@global`,
-  "points.myPoints": `points.myPoints [offset] [count] [origin]
+  Example: stores.join 345@global`,
+  "stores.myPoints": `stores.myPoints [offset] [count] [origin]
   → List your own points in an origin.
-  Example: points.myPoints 0 10 global`,
-  "points.list": `points.list [offset] [count]
+  Example: stores.myPoints 0 10 global`,
+  "stores.list": `stores.list [offset] [count]
   → List points with pagination.
-  Example: points.list 0 10`,
-  "points.history": `points.history [pointId]
+  Example: stores.list 0 10`,
+  "stores.history": `stores.history [pointId]
   → Read signal/history log of a point.
-  Example: points.history 345@global`,
-  "points.signal": `points.signal [pointId] [userId] [transferType] [data]
+  Example: stores.history 345@global`,
+  "stores.signal": `stores.signal [pointId] [userId] [transferType] [data]
   → Send a signal/message.
-  Example: points.signal 345@global - broadcast {"text":"hello"}`,
-  "points.fileSignal": `points.fileSignal [pointId] [userId] [transferType] [data]
+  Example: stores.signal 345@global - broadcast {"text":"hello"}`,
+  "stores.fileSignal": `stores.fileSignal [pointId] [userId] [transferType] [data]
   → Send a signal carrying file/entity metadata.
-  Example: points.fileSignal 345@global 123@global single {"fileId":"789@global"}`,
-  "points.paidSignal": `points.paidSignal [pointId] [userId] [transferType] [data] [lockId]
+  Example: stores.fileSignal 345@global 123@global single {"fileId":"789@global"}`,
+  "stores.paidSignal": `stores.paidSignal [pointId] [userId] [transferType] [data] [lockId]
   → Send a paid signal bound to a lock id.
-  Example: points.paidSignal 345@global 123@global single {"task":"run"} 4f0f02a8d0`,
-  "points.addMember": `points.addMember [userId] [pointId] [metadata]
+  Example: stores.paidSignal 345@global 123@global single {"task":"run"} 4f0f02a8d0`,
+  "stores.addMember": `stores.addMember [userId] [pointId] [metadata]
   → Add user membership to a point.
-  Example: points.addMember 123@global 345@global {"role":"teacher"}`,
-  "points.updateMember": `points.updateMember [userId] [pointId] [metadata]
+  Example: stores.addMember 123@global 345@global {"role":"teacher"}`,
+  "stores.updateMember": `stores.updateMember [userId] [pointId] [metadata]
   → Update a user's point membership metadata.
-  Example: points.updateMember 123@global 345@global {"role":"moderator"}`,
-  "points.removeMember": `points.removeMember [userId] [pointId]
+  Example: stores.updateMember 123@global 345@global {"role":"moderator"}`,
+  "stores.removeMember": `stores.removeMember [userId] [pointId]
   → Revoke a user membership from a point.
-  Example: points.removeMember 123@global 345@global`,
-  "points.listMembers": `points.listMembers [pointId]
+  Example: stores.removeMember 123@global 345@global`,
+  "stores.listMembers": `stores.listMembers [pointId]
   → List members in a point.
-  Example: points.listMembers 345@global`,
-  "points.addMachine": `points.addMachine [pointId] [appId] [machineId]
+  Example: stores.listMembers 345@global`,
+  "stores.addMachine": `stores.addMachine [pointId] [appId] [machineId]
   → Attach a machine to a point.
-  Example: points.addMachine 345@global 984@global 876@global`,
+  Example: stores.addMachine 345@global 984@global 876@global`,
   "invites.create": `invites.create [pointId] [userId]
   → Invite a user to a point.
   Example: invites.create 345@global 123@global`,
@@ -2178,33 +1755,33 @@ const helpEntries: { [key: string]: string } = {
   "chains.registerNode": `chains.registerNode [origin]
   → Register current node on a chain origin.
   Example: chains.registerNode global`,
-  "machines.createApp": `machines.createApp [chainId] [username] [title] [desc]
+  "creatures.createMachine": `creatures.createMachine [chainId] [username] [title] [desc]
   → Create a new app on a workchain.
-  Example: machines.createApp 1 calcapp Calculator "simple calc app"`,
-  "machines.createMachine": `machines.createMachine [username] [appId] [path] [runtime] [comment]
+  Example: creatures.createMachine 1 calcapp Calculator "simple calc app"`,
+  "programs.create": `programs.create [username] [appId] [path] [runtime] [comment]
   → Create a machine under an app.
-  Example: machines.createMachine calculator 984@global /api/sum wasm "sum machine"`,
-  "machines.deleteMachine": `machines.deleteMachine [machineId]
+  Example: programs.create calculator 984@global /api/sum wasm "sum machine"`,
+  "programs.delete": `programs.delete [machineId]
   → Delete an existing machine.
-  Example: machines.deleteMachine 876@global`,
-  "machines.updateMachine": `machines.updateMachine [machineId] [path] [metadataJsonOrFilePath] [optional promptFile]
+  Example: programs.delete 876@global`,
+  "programs.update": `programs.update [machineId] [path] [metadataJsonOrFilePath] [optional promptFile]
   → Update machine route path and metadata.
-  Example: machines.updateMachine 876@global /api/sum '{"public":{"profile":{"title":"Calc"}}}'`,
-  "machines.deploy": `machines.deploy [machineId] [machineFolderPath] [runtime] [metadata]
+  Example: programs.update 876@global /api/sum '{"public":{"profile":{"title":"Calc"}}}'`,
+  "programs.deploy": `programs.deploy [machineId] [machineFolderPath] [runtime] [metadata]
   → Deploy project code as machine.
-  Example: machines.deploy 876@global ./calculator-proj wasm {}`,
-  "machines.runMachine": `machines.runMachine [machineId]
+  Example: programs.deploy 876@global ./calculator-proj wasm {}`,
+  "programs.run": `programs.run [machineId]
   → Start/run a deployed machine.
-  Example: machines.runMachine 876@global`,
-  "machines.listApps": `machines.listApps [offset] [count]
+  Example: programs.run 876@global`,
+  "creatures.listMachines": `creatures.listMachines [offset] [count]
   → List created apps with pagination.
-  Example: machines.listApps 0 15`,
-  "machines.listMachines": `machines.listMachines [offset] [count]
+  Example: creatures.listMachines 0 15`,
+  "programs.list": `programs.list [offset] [count]
   → List created machines with pagination.
-  Example: machines.listMachines 0 15`,
-  "pc.runPc": `pc.runPc
+  Example: programs.list 0 15`,
+  "pc.run": `pc.run
   → Create a cloud Linux PC micro-VM.
-  Example: pc.runPc`,
+  Example: pc.run`,
 };
 
 const fullHelp = `Decillion AI CLI – Command Reference
@@ -2215,12 +1792,12 @@ ${Object.values(helpEntries).join("\n\n")}
 help [optional command]
   → Show full help or command-specific help.
   Example1: help
-  Example2: help points.signal
+  Example2: help stores.signal
 
 Non-interactive mode:
   1) Single command: decillion <command> [args...]
-     Example: decillion users.me
-  2) Batch inline: decillion --batch "users.me; users.list 0 10"
+     Example: decillion creatures.me
+  2) Batch inline: decillion --batch "creatures.me; creatures.list 0 10"
   3) Batch file: decillion --batch-file ./commands.txt
 `;
 

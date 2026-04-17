@@ -1,76 +1,23 @@
-# Decillion AI CLI (`decillion`)
+# Decillion CLI (`decillion`)
 
-A TypeScript/Node.js command-line client for interacting with Decillion AI APIs, including:
+A TypeScript/Node.js CLI for the **current Decillion protocol model**:
 
-- account/authentication workflows,
-- users and token-lock actions,
-- points/spaces collaboration actions,
-- invitations,
-- file/entity storage,
-- chain operations,
-- machine/app lifecycle,
-- and cloud PC provisioning.
-
-The executable command is:
-
-```bash
-decillion
-```
-
-## Table of contents
-
-- [Requirements](#requirements)
-- [Install](#install)
-  - [Option A: Use OS install scripts (Linux/macOS/Windows-Bash)](#option-a-use-os-install-scripts-linuxmacoswindows-bash)
-  - [Option B: Manual npm install](#option-b-manual-npm-install)
-- [Run modes](#run-modes)
-- [Authentication and local state](#authentication-and-local-state)
-- [NPM scripts](#npm-scripts)
-- [Documentation](#documentation)
-- [Troubleshooting](#troubleshooting)
-
----
-
-## Requirements
-
-- Node.js LTS
-- npm
-- Network access to Decillion endpoints used by the CLI
-
-> The provided install scripts can install Node.js/npm automatically when possible.
+- **creatures** (identity/account + signal dispatch)
+- **programs** (deployable/runnable logic under creatures)
+- **stores/spaces** (collaboration/message surfaces)
+- **miniapp-backed domains** (invites, storage, chains, pc)
 
 ## Install
 
-### Option A: Use OS install scripts (Linux/macOS/Windows-Bash)
-
-From repository root:
-
-#### Linux
+### Quick install scripts
 
 ```bash
-bash scripts/install-linux.sh
+bash scripts/install-linux.sh      # Linux
+bash scripts/install-macos.sh      # macOS
+bash scripts/install-windows.sh    # Windows (Bash)
 ```
 
-#### macOS
-
-```bash
-bash scripts/install-macos.sh
-```
-
-#### Windows (Git Bash / MSYS / Cygwin bash shell)
-
-```bash
-bash scripts/install-windows.sh
-```
-
-Each installer script attempts to:
-
-1. install Node.js + npm if missing,
-2. install project dependencies,
-3. build the CLI,
-4. globally install the package so `decillion` is available in `PATH`.
-
-### Option B: Manual npm install
+### Manual install
 
 ```bash
 npm install
@@ -78,7 +25,7 @@ npm run build
 npm install -g .
 ```
 
-Validate installation:
+Verify:
 
 ```bash
 decillion help
@@ -86,72 +33,78 @@ decillion help
 
 ## Run modes
 
-### Interactive shell
+### Interactive
 
 ```bash
 decillion
 ```
 
-Starts the interactive prompt:
-
-- prompt format: `<username>$`
-- built-in help command: `help`
-- clear terminal command: `clear`
-
-### Non-interactive single command
+### Single command
 
 ```bash
-decillion users.me
+decillion creatures.me
 ```
 
-### Non-interactive batch string
+### Batch string
 
 ```bash
-decillion --batch "users.me; users.list 0 10"
+decillion --batch "creatures.me; stores.list 0 10"
 ```
 
-### Non-interactive batch file
+### Batch file
 
 ```bash
 decillion --batch-file ./commands.txt
 ```
 
-Batch file notes:
-
-- one command per line,
-- blank lines are ignored,
-- lines beginning with `#` are treated as comments.
-
 ## Authentication and local state
 
-### Login
+Login opens local callback flow:
 
 ```bash
 decillion login <username>
 ```
 
-Login starts a local callback server and asks you to open:
-
-- `http://localhost:3000/index.html`
-
-### Credential storage
-
-This CLI stores credentials in the working directory:
+Credentials are stored in current working directory:
 
 - `auth/userId.txt`
 - `auth/privateKey.txt`
 
-It also creates:
+Other local folder used by CLI:
 
-- `files/` (used by file operations)
+- `files/` (download target)
 
-### Logout
+Logout:
 
 ```bash
 decillion logout
 ```
 
-Removes local credential files.
+## Miniapp routing environment variables
+
+Some command families (stores/invites/storage/chains/pc) are routed through creature signaling.
+Set target IDs per domain:
+
+- `DECILLION_<KEY>_CREATURE_ID`
+- `DECILLION_<KEY>_PROGRAM_ID`
+- `DECILLION_<KEY>_ENTITY` (optional, default: `main`)
+- `DECILLION_<KEY>_STORE_ID` (optional)
+
+Where `<KEY>` is one of:
+
+- `STORES`
+- `INVITES`
+- `STORAGE`
+- `CHAINS`
+- `PC`
+
+Example:
+
+```bash
+export DECILLION_STORES_CREATURE_ID="..."
+export DECILLION_STORES_PROGRAM_ID="..."
+export DECILLION_STORES_ENTITY="main"
+```
 
 ## NPM scripts
 
@@ -162,24 +115,10 @@ npm run start
 npm test
 ```
 
-- `dev`: builds and starts.
-- `build`: compiles TypeScript and prepares `dist/index.cjs` for CLI execution.
-- `start`: runs built CLI entry.
-- `test`: placeholder script (currently exits with error by design).
+- `build` compiles TS and prepares `dist/index.cjs`.
+- `test` is currently a placeholder script in this repo.
 
-## Documentation
+## Docs
 
-- Full command reference: [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md)
-- Install details and platform notes: [`docs/INSTALLATION.md`](docs/INSTALLATION.md)
-
-## Troubleshooting
-
-- If `decillion` is not found after installation, ensure global npm bin directory is in your `PATH`.
-- If Windows installation used `winget/choco/scoop`, open a new terminal session before retrying.
-- If auth fails, run:
-
-  ```bash
-  decillion logout
-  decillion login <username>
-  ```
-
+- Command reference: [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md)
+- Installation details: [`docs/INSTALLATION.md`](docs/INSTALLATION.md)

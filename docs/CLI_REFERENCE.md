@@ -1,6 +1,17 @@
 # Decillion CLI Reference
 
-Use `decillion help` anytime to print the built-in command reference.
+Use `decillion help` for built-in command help.
+
+## Protocol model (current)
+
+The CLI is aligned with the current backend model:
+
+- `creatures` for account/identity and direct signaling
+- `programs` for program lifecycle actions
+- `stores` for space/store collaboration actions
+- `invites`, `storage`, `chains`, and `pc` as command families routed via miniapp signaling
+
+---
 
 ## Global usage
 
@@ -8,7 +19,7 @@ Use `decillion help` anytime to print the built-in command reference.
 decillion [command] [args...]
 ```
 
-Non-interactive helpers:
+Batch helpers:
 
 ```bash
 decillion --batch "cmd1; cmd2; cmd3"
@@ -17,117 +28,110 @@ decillion --batch-file ./commands.txt
 
 ## Meta commands
 
-- `help` → print full help
-- `help <command>` → print command-specific help
-- `clear` → clear interactive terminal screen
+- `help`
+- `help <command>`
+- `clear`
 
-## Authentication
+## Auth & account
 
-| Command | Parameters | Description | Example |
-|---|---|---|---|
-| `login` | `[username]` | Log in account via browser callback flow. | `login alice123` |
-| `logout` | none | Log out and remove local auth files. | `logout` |
-| `charge` | none | Create payment checkout URL. | `charge` |
-| `printPrivateKey` | none | Print account private key body. | `printPrivateKey` |
+| Command | Params | Description |
+|---|---|---|
+| `login` | `[username]` | Login via browser callback flow. |
+| `logout` | none | Clear local auth state. |
+| `charge` | none | Generate payment checkout URL. |
+| `printPrivateKey` | none | Print local private key body. |
 
-## Users
+## Creatures
 
-| Command | Parameters | Description | Example |
-|---|---|---|---|
-| `users.me` | none | Get current user profile. | `users.me` |
-| `users.get` | `[userId]` | Get specific user profile. | `users.get 123@global` |
-| `users.lockToken` | `[amount] [type] [target]` | Lock tokens for payment/execution. | `users.lockToken 100 pay 145@global` |
-| `users.consumeLock` | `[lockId] [type] [amount]` | Consume a lock and settle payment. | `users.consumeLock 4f0f02a8d0 pay 100` |
-| `users.list` | `[offset] [count]` | List users (paged). | `users.list 0 10` |
+| Command | Params | Description |
+|---|---|---|
+| `creatures.me` | none | Get current creature profile. |
+| `creatures.get` | `[creatureId]` | Get creature by id. |
+| `creatures.list` | `[offset] [count]` | List creatures. |
+| `creatures.lockToken` | `[amount] [type] [target]` | Lock tokens. |
+| `creatures.consumeLock` | `[lockId] [type] [amount]` | Consume token lock. |
+| `creatures.signal` | `[creatureId] [programId] [entity] [data] [optional storeId]` | Send direct creature signal. |
+| `creatures.createMachine` | `[chainId] [username] [title] [desc]` | Create a machine-type creature. |
+| `creatures.listMachines` | `[offset] [count]` | List machine creatures. |
 
-## Points
+## Stores (spaces)
 
-| Command | Parameters | Description | Example |
-|---|---|---|---|
-| `points.create` | `[isPublic] [hasPersistentHistory] [origin] [title]` | Create a point. | `points.create true true global study-room` |
-| `points.update` | `[pointId] [isPublic] [hasPersistentHistory]` | Update point visibility/history flags. | `points.update 345@global false true` |
-| `points.get` | `[pointId]` | Get point details. | `points.get 345@global` |
-| `points.delete` | `[pointId]` | Delete point. | `points.delete 345@global` |
-| `points.join` | `[pointId]` | Join public point. | `points.join 345@global` |
-| `points.myPoints` | `[offset] [count] [origin]` | List your points by origin. | `points.myPoints 0 10 global` |
-| `points.list` | `[offset] [count]` | List points (paged). | `points.list 0 10` |
-| `points.history` | `[pointId]` | Read point history/signals. | `points.history 345@global` |
-| `points.signal` | `[pointId] [userId] [transferType] [data]` | Send message/signal. | `points.signal 345@global - broadcast {"text":"hello"}` |
-| `points.fileSignal` | `[pointId] [userId] [transferType] [data]` | Send signal containing file/entity metadata. | `points.fileSignal 345@global 123@global single {"fileId":"789@global"}` |
-| `points.paidSignal` | `[pointId] [userId] [transferType] [data] [lockId]` | Send paid signal tied to lock id. | `points.paidSignal 345@global 123@global single {"task":"run"} 4f0f02a8d0` |
-| `points.addMember` | `[userId] [pointId] [metadata]` | Add point membership. | `points.addMember 123@global 345@global {"role":"teacher"}` |
-| `points.updateMember` | `[userId] [pointId] [metadata]` | Update member metadata. | `points.updateMember 123@global 345@global {"role":"moderator"}` |
-| `points.removeMember` | `[userId] [pointId]` | Remove point member. | `points.removeMember 123@global 345@global` |
-| `points.listMembers` | `[pointId]` | List point members. | `points.listMembers 345@global` |
-| `points.addMachine` | `[pointId] [appId] [machineId]` | Attach machine to point. | `points.addMachine 345@global 984@global 876@global` |
+| Command | Params | Description |
+|---|---|---|
+| `stores.create` | `[isPublic] [hasPersistentHistory] [origin] [title]` | Create store/space. |
+| `stores.update` | `[storeId] [isPublic] [hasPersistentHistory]` | Update store visibility/history. |
+| `stores.get` | `[storeId]` | Get store details. |
+| `stores.delete` | `[storeId]` | Delete store. |
+| `stores.join` | `[storeId]` | Join store. |
+| `stores.myPoints` | `[offset] [count] [origin]` | List your stores. |
+| `stores.list` | `[offset] [count]` | List stores. |
+| `stores.history` | `[storeId]` | Read store history. |
+| `stores.signal` | `[storeId] [userId] [transferType] [data]` | Send store signal. |
+| `stores.fileSignal` | `[storeId] [userId] [transferType] [data]` | Signal with file/entity metadata. |
+| `stores.paidSignal` | `[storeId] [userId] [transferType] [data] [lockId]` | Paid signal with lock. |
+| `stores.addMember` | `[userId] [storeId] [metadata]` | Add member. |
+| `stores.updateMember` | `[userId] [storeId] [metadata]` | Update member metadata. |
+| `stores.removeMember` | `[userId] [storeId]` | Remove member. |
+| `stores.listMembers` | `[storeId]` | List members. |
+| `stores.addMachine` | `[storeId] [creatureId] [programId]` | Attach creature program to store. |
 
 ## Invites
 
-| Command | Parameters | Description | Example |
-|---|---|---|---|
-| `invites.create` | `[pointId] [userId]` | Invite user to point. | `invites.create 345@global 123@global` |
-| `invites.cancel` | `[pointId] [userId]` | Cancel point invite. | `invites.cancel 345@global 123@global` |
-| `invites.accept` | `[pointId]` | Accept invite. | `invites.accept 345@global` |
-| `invites.decline` | `[pointId]` | Decline invite. | `invites.decline 345@global` |
+| Command | Params | Description |
+|---|---|---|
+| `invites.create` | `[storeId] [userId]` | Create invite. |
+| `invites.cancel` | `[storeId] [userId]` | Cancel invite. |
+| `invites.accept` | `[storeId]` | Accept invite. |
+| `invites.decline` | `[storeId]` | Decline invite. |
 
 ## Storage
 
-| Command | Parameters | Description | Example |
-|---|---|---|---|
-| `storage.upload` | `[pointId] [filePath] [optional fileId]` | Upload file to point. | `storage.upload 345@global ./book.pdf` |
-| `storage.uploadUserEntity` | `[entityId] [filePath] [optional machineId]` | Upload user-scoped entity file. | `storage.uploadUserEntity avatar-v1 ./avatar.png` |
-| `storage.download` | `[pointId] [fileId]` | Download file from point. | `storage.download 345@global 789@global` |
+| Command | Params | Description |
+|---|---|---|
+| `storage.upload` | `[storeId] [filePath] [optional fileId]` | Upload file. |
+| `storage.uploadUserEntity` | `[entityId] [filePath] [optional programId]` | Upload creature/user entity. |
+| `storage.download` | `[storeId] [fileId]` | Download file. |
 
 ## Chains
 
-| Command | Parameters | Description | Example |
-|---|---|---|---|
-| `chains.create` | `[participants stakes json] [isTemporary]` | Create workchain. | `chains.create {"123.124.125.126":1600} false` |
-| `chains.submitBaseTrx` | `[chainId] [key] [payload]` | Submit base transaction. | `chains.submitBaseTrx 1 /points/create {"isPublic":true,"persHist":true,"orig":"global"}` |
-| `chains.registerNode` | `[origin]` | Register current node. | `chains.registerNode global` |
+| Command | Params | Description |
+|---|---|---|
+| `chains.create` | `[participants stakes json] [isTemporary]` | Create chain. |
+| `chains.submitBaseTrx` | `[chainId] [key] [payload]` | Submit base transaction. |
+| `chains.registerNode` | `[origin]` | Register node. |
 
-## Machines / Apps
+## Programs
 
-| Command | Parameters | Description | Example |
-|---|---|---|---|
-| `machines.createApp` | `[chainId] [username] [title] [desc]` | Create app on chain. | `machines.createApp 1 calcapp Calculator "simple calc app"` |
-| `machines.createMachine` | `[username] [appId] [path] [runtime] [comment]` | Create machine under app. | `machines.createMachine calculator 984@global /api/sum wasm "sum machine"` |
-| `machines.deleteMachine` | `[machineId]` | Delete machine. | `machines.deleteMachine 876@global` |
-| `machines.updateMachine` | `[machineId] [path] [metadataJsonOrFilePath] [optional promptFile]` | Update path/metadata (JSON string or file path). | `machines.updateMachine 876@global /api/sum '{"public":{"profile":{"title":"Calc"}}}'` |
-| `machines.deploy` | `[machineId] [machineFolderPath] [runtime] [metadata]` | Deploy machine project code. | `machines.deploy 876@global ./calculator-proj wasm {}` |
-| `machines.runMachine` | `[machineId]` | Run deployed machine. | `machines.runMachine 876@global` |
-| `machines.listApps` | `[offset] [count]` | List created apps. | `machines.listApps 0 15` |
-| `machines.listMachines` | `[offset] [count]` | List created machines. | `machines.listMachines 0 15` |
+| Command | Params | Description |
+|---|---|---|
+| `programs.create` | `[username] [creatureId] [path] [runtime] [comment]` | Create program under creature. |
+| `programs.update` | `[programId] [path] [metadataJsonOrFilePath] [optional promptFile]` | Update program. |
+| `programs.delete` | `[programId]` | Delete program. |
+| `programs.deploy` | `[programId] [programFolderPath] [runtime] [metadata]` | Deploy program artifacts. |
+| `programs.run` | `[programId]` | Run program entity (`main`). |
+| `programs.list` | `[offset] [count]` | List programs. |
 
 ## PC
 
-| Command | Parameters | Description | Example |
-|---|---|---|---|
-| `pc.runPc` | none | Create a cloud Linux PC micro-VM. | `pc.runPc` |
+| Command | Params | Description |
+|---|---|---|
+| `pc.run` | none | Start cloud PC flow. |
 
-After `pc.runPc`, the prompt enters command pass-through mode where your typed input is sent to the remote PC.
+After `pc.run`, prompt enters remote command pass-through mode.
 
-Special escape commands while in PC/log streaming mode:
+Escape commands while in pass-through/log mode:
 
-- `pc stop` → exit remote PC command mode
-- `docker logs exit` → exit docker build log streaming mode
+- `pc stop`
+- `docker logs exit`
 
-## Notes on argument parsing and quoting
+## Quoting notes
 
-- The parser supports single-quoted and double-quoted arguments.
-- Values with spaces should be wrapped in quotes.
-- JSON payloads should generally be wrapped in single quotes to avoid shell escaping issues.
+- Use quotes for values with spaces.
+- Prefer single quotes around JSON payloads.
 
 Examples:
 
 ```bash
-decillion machines.createApp 1 calcapp Calculator "simple calc app"
-decillion points.signal 345@global - broadcast '{"text":"hello from cli"}'
+decillion creatures.createMachine 1 calcapp Calculator "simple calc app"
+decillion stores.signal 345@global - broadcast '{"text":"hello"}'
 ```
-
-## Exit behavior
-
-- Command success returns exit code `0`.
-- Unknown command and validation errors return non-zero codes.
-- Auth-required commands fail with an auth-related error code if not logged in.
-
