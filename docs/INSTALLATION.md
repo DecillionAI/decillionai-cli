@@ -1,22 +1,23 @@
 # Installation Guide
 
-This project exposes a global CLI executable named `decillion`.
+This package exposes the global executable:
+
+- `decillion`
 
 ## 1) Quick install scripts
 
-From repo root:
+From repository root:
 
 - Linux: `bash scripts/install-linux.sh`
 - macOS: `bash scripts/install-macos.sh`
 - Windows Bash: `bash scripts/install-windows.sh`
 
-### What each script does
+Each script attempts to:
 
-1. Checks if Node.js and npm are already installed.
-2. Installs Node.js/npm if missing.
-3. Runs `npm install`.
-4. Runs `npm run build`.
-5. Runs `npm install -g .`.
+1. Ensure Node.js + npm exist.
+2. Run `npm install`.
+3. Run `npm run build`.
+4. Run `npm install -g .`.
 
 ## 2) Manual install
 
@@ -26,35 +27,62 @@ npm run build
 npm install -g .
 ```
 
-Then test:
+Verify:
 
 ```bash
 decillion help
 ```
 
-## 3) Package metadata relevant to CLI
+## 3) First-run setup (recommended)
 
-- npm package name: `decillion`
-- npm `bin` mapping: `decillion -> dist/index.cjs`
-- runtime entry shebang is configured for Node.js execution.
+### Login
 
-## 4) Platform-specific notes
+```bash
+decillion login <username>
+```
+
+### Configure miniapp routing env vars
+
+Some command families (`stores`, `invites`, `storage`, `chains`, `pc`) are routed through creature signaling.
+Define target routing values:
+
+- `DECILLION_<KEY>_CREATURE_ID`
+- `DECILLION_<KEY>_PROGRAM_ID`
+- optional `DECILLION_<KEY>_ENTITY` (defaults to `main`)
+- optional `DECILLION_<KEY>_STORE_ID`
+
+`<KEY>` values:
+
+- `STORES`
+- `INVITES`
+- `STORAGE`
+- `CHAINS`
+- `PC`
+
+Example:
+
+```bash
+export DECILLION_STORES_CREATURE_ID="..."
+export DECILLION_STORES_PROGRAM_ID="..."
+export DECILLION_STORES_ENTITY="main"
+```
+
+## 4) Package metadata
+
+- npm package: `decillion`
+- bin mapping: `decillion -> dist/index.cjs`
+
+## 5) Platform notes
 
 ### Linux
 
-The Linux installer supports several package managers (e.g., apt, dnf, yum, pacman, zypper).
+Installer supports common managers (apt/dnf/yum/pacman/zypper).
 
 ### macOS
 
-The macOS installer uses Homebrew. If Homebrew is not present, it installs Homebrew first.
+Installer uses Homebrew and installs it if needed.
 
-### Windows (Bash environments)
+### Windows (Bash shells)
 
-The Windows installer script is intended for Bash-style shells on Windows and tries:
-
-- `winget`
-- `choco`
-- `scoop`
-
-If Node.js installation finishes but `npm` is still unavailable in the current shell, open a new terminal and rerun.
-
+Installer attempts `winget`, `choco`, and `scoop`.
+If Node/npm were just installed, open a new terminal and retry.
