@@ -2,6 +2,8 @@
 
 Use `decillion help` anytime to print the built-in command reference.
 
+> Protocol update note: the backend model now centers on **creatures + programs + stores(spaces)**. Legacy command families (`users`, `points`, `apps`, `machines`) are kept in CLI for compatibility and internally routed to the new endpoint layout.
+
 ## Global usage
 
 ```bash
@@ -130,4 +132,3 @@ decillion points.signal 345@global - broadcast '{"text":"hello from cli"}'
 - Command success returns exit code `0`.
 - Unknown command and validation errors return non-zero codes.
 - Auth-required commands fail with an auth-related error code if not logged in.
-
