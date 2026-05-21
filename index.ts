@@ -67,12 +67,13 @@ class Decillion {
   }
   private async connectoToTlsServer() {
     return new Promise((resolve, reject) => {
+      const insecure = process.env.DECILLION_INSECURE === "1";
       if (this.protocol === "tcp") {
         const options: tls.ConnectionOptions = {
           host: this.host,
           port: this.port,
           servername: this.host,
-          rejectUnauthorized: true,
+          rejectUnauthorized: !insecure,
         };
         this.socket = tls.connect(options, () => {
           if (this.socket?.authorized) {
@@ -100,7 +101,7 @@ class Decillion {
           });
         });
       } else {
-        this.websocket = new WebSocket(`wss://${this.host}:${this.port2}`);
+        this.websocket = new WebSocket(`wss://${this.host}:${this.port2}`, { rejectUnauthorized: !insecure } as any);
         this.websocket.on('open', () => {
           console.log("✔ Ws TLS connection authorized");
           this.authenticate();
@@ -388,6 +389,33 @@ class Decillion {
       console.log("");
     });
   }
+  // Non-interactive dev login: skips the browser/Auth0 round-trip and submits
+  // a raw email as the "emailToken". Works against caspar nodes running with
+  // Firebase disabled (DEV mode); the server then treats the token as an email.
+  public async loginDev(username: string, email?: string): Promise<{ resCode: number; obj: any }> {
+    const devEmail = email && email.includes("@") ? email : `${username}@dev.local`;
+    const res = await this.sendRequest("", "/creatures/login", {
+      username,
+      emailToken: devEmail,
+      metadata: {
+        public: {
+          profile: { name: username },
+        },
+      },
+    });
+    if (res.resCode == 0) {
+      this.userId = res.obj.user.id;
+      this.privateKey = res.obj.privateKey;
+      await Promise.all([
+        new Promise((resolve) => fs.writeFile("auth/userId.txt", this.userId ?? "", { encoding: "utf-8" }, () => resolve(undefined))),
+        new Promise((resolve) => fs.writeFile("auth/privateKey.txt", this.privateKey ?? "", { encoding: "utf-8" }, () => resolve(undefined))),
+      ]);
+      await this.authenticate();
+      this.username = (await this.creatures.me()).obj?.user?.username;
+      console.log("Dev login successful");
+    }
+    return res;
+  }
   public async authenticate(): Promise<{ resCode: number; obj: any }> {
     if (!this.userId) {
       return {
@@ -579,6 +607,12 @@ class Decillion {
       return await this.sendRequest(this.userId, "/creatures/signal", {
         type: "pvp",
         creatureId,
+        // Forward programId and entityId at the top level so the server's
+        // Signal action can route the packet to the program's VM listener
+        // (Vmm.Assign registers listeners under the programId). Without these
+        // the signal falls back to the creature, where no VM is listening.
+        programId,
+        entityId: entity,
         storeId,
         temp,
         data: JSONbig.stringify({ programId, entity, payload: data }),
@@ -847,10 +881,19 @@ class Decillion {
         console.clear();
         console.log("starting docker build...");
       }
+      // The server's DeployInput uses { machineId, entityId, entityType, payload, metadata, downloadable }.
+      // Map the legacy CLI args onto that shape so both ends agree:
+      //   byteCode (base64) -> payload
+      //   runtime           -> entityType
+      //   metadata.entity / metadata.entityId can override the default "main"
+      const entityId = (metadata && (metadata.entityId || metadata.entity)) || "main";
+      const downloadable = !!(metadata && metadata.downloadable);
       return await this.sendRequest(this.userId, "/programs/deploy", {
         machineId: machineId,
-        byteCode: byteCode,
-        runtime: runtime,
+        entityId: entityId,
+        entityType: runtime,
+        payload: byteCode,
+        downloadable: downloadable,
         metadata: metadata,
       });
     },
@@ -1072,7 +1115,11 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-let app = new Decillion();
+const envHost = process.env.DECILLION_HOST;
+const envProto = process.env.DECILLION_PROTO || "ws";
+const envPortStr = process.env.DECILLION_PORT;
+const envPort = envPortStr ? parseInt(envPortStr, 10) : undefined;
+let app = new Decillion(envProto, envHost, envPort);
 let pcId: string | undefined = undefined;
 let dockBuild: string | undefined = undefined;
 
@@ -1084,6 +1131,12 @@ const commands: {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
     return await app.login(args[0]);
+  },
+  loginDev: async (args: string[]): Promise<{ resCode: number; obj: any }> => {
+    if (args.length < 1 || args.length > 2) {
+      return { resCode: 30, obj: { message: "invalid parameters count" } };
+    }
+    return await app.loginDev(args[0], args[1]);
   },
   logout: async (args: string[]): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 0) {
@@ -1869,10 +1922,16 @@ async function runParsedCommand(parts: string[]): Promise<number> {
 }
 
 function commandRequiresAuth(command: string): boolean {
-  return command !== "login" && command !== "help" && command !== "clear";
+  return command !== "login" && command !== "loginDev" && command !== "help" && command !== "clear";
 }
 
 async function runNonInteractive(argv: string[]): Promise<number> {
+  // Short-circuit offline-only commands so users can browse help without
+  // a live server connection.
+  const firstArg = argv[0]?.trim();
+  if (firstArg === "help" || firstArg === "clear") {
+    return await runParsedCommand(parseCommandParts(argv.join(" ").trim()));
+  }
   await app.connectTransport();
 
   let batches: string[] = [];
