@@ -123,6 +123,10 @@ class Decillion {
       }
     });
   }
+  // Async req/res over the signaling channel: signalMiniapp registers a
+  // resolver keyed by correlationId here, then waits for an inbound 0x01
+  // packet (key "creatures/signal/result") carrying that same id.
+  private pendingSignalResponses: { [correlationId: string]: (resp: any) => void } = {};
   private processPacket(data: Buffer) {
     try {
       let pointer = 0;
@@ -133,8 +137,20 @@ class Decillion {
         let key = data.subarray(pointer, pointer + keyLen).toString();
         pointer += keyLen;
         let payload = data.subarray(pointer);
-        let obj = JSONbig.parse(payload.toString());
-        if (key == "pc/message") {
+        let obj: any;
+        try {
+          obj = JSONbig.parse(payload.toString());
+        } catch {
+          obj = payload.toString();
+        }
+        if (key == "creatures/signal/result") {
+          const cid = obj && typeof obj === "object" ? obj.correlationId : undefined;
+          if (cid && this.pendingSignalResponses[cid]) {
+            const resolve = this.pendingSignalResponses[cid];
+            delete this.pendingSignalResponses[cid];
+            resolve(obj);
+          }
+        } else if (key == "pc/message") {
           if (pcId) process.stdout.write(obj.message);
         } else if (key == "docker/build") {
           if (dockBuild) process.stdout.write(obj.message + "\n");
@@ -692,6 +708,10 @@ class Decillion {
     return { creatureId, programId, entityId, storeId };
   }
 
+  // Request/response over signaling: each miniapp call attaches a correlation
+  // id, ships the signal, and waits for the creature to signal the requester
+  // back with key "creatures/signal/result" carrying the same id. The resolved
+  // payload is the JSON the creature emitted at the end of its run().
   private async signalMiniapp(key: string, action: string, payload: any, temp = false): Promise<{ resCode: number; obj: any }> {
     if (!this.userId) {
       return {
@@ -708,8 +728,43 @@ class Decillion {
         },
       };
     }
-    const data = JSONbig.stringify({ action, programId: target.programId, entity: target.entityId, payload });
-    return this.creatures.signal(target.creatureId, target.programId, target.entityId, data, target.storeId, temp);
+    const correlationId = crypto.randomBytes(16).toString("hex");
+    const data = JSONbig.stringify({
+      action,
+      programId: target.programId,
+      entity: target.entityId,
+      correlationId,
+      payload,
+    });
+    // Default timeout chosen to comfortably cover wasm cold-start + host ops.
+    const timeoutMs = Number(process.env.DECILLION_SIGNAL_TIMEOUT_MS || "30000");
+    const responsePromise = new Promise<{ resCode: number; obj: any }>((resolve) => {
+      let timer: NodeJS.Timeout | undefined;
+      this.pendingSignalResponses[correlationId] = (resp: any) => {
+        if (timer) clearTimeout(timer);
+        resolve({ resCode: 0, obj: resp });
+      };
+      timer = setTimeout(() => {
+        if (this.pendingSignalResponses[correlationId]) {
+          delete this.pendingSignalResponses[correlationId];
+          resolve({
+            resCode: 32,
+            obj: { message: `creature signal response timeout`, correlationId, key, action, timeoutMs },
+          });
+        }
+      }, timeoutMs);
+    });
+    const sendRes = await this.creatures.signal(target.creatureId, target.programId, target.entityId, data, target.storeId, temp);
+    if (sendRes.resCode !== 0) {
+      // /creatures/signal itself failed (auth, validation, etc); the creature
+      // won't run, so nothing will ever signal us back. Clean up the listener
+      // and propagate the underlying error.
+      if (this.pendingSignalResponses[correlationId]) {
+        delete this.pendingSignalResponses[correlationId];
+      }
+      return sendRes;
+    }
+    return responsePromise;
   }
 
   public points = {

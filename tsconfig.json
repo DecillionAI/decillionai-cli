@@ -8,6 +8,7 @@
     "strict": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "declaration": false
+    "declaration": false,
+    "ignoreDeprecations": "5.0"
   }
 }
