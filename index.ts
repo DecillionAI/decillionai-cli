@@ -149,6 +149,8 @@ class Decillion {
             const resolve = this.pendingSignalResponses[cid];
             delete this.pendingSignalResponses[cid];
             resolve(obj);
+          } else {
+            console.log("[signal-result]", obj);
           }
         } else if (key == "pc/message") {
           if (pcId) process.stdout.write(obj.message);
@@ -620,7 +622,63 @@ class Decillion {
           obj: { message: USER_ID_NOT_SET_ERR_MSG },
         };
       }
-      return await this.sendRequest(this.userId, "/creatures/signal", {
+
+      // If the caller-supplied `data` is a JSON object that doesn't already
+      // carry a correlationId, inject one and wait for the WASM creature to
+      // signal the result back over key "creatures/signal/result". This makes
+      // direct signals symmetrical with miniapp signals: the call resolves to
+      // the actual VM response instead of just the synchronous ACK.
+      //
+      // If the data already has a correlationId we leave it alone — that
+      // means the call came from `signalMiniapp`, which manages its own
+      // pendingSignalResponses entry and would have ours overwrite its.
+      let waitForResponse = false;
+      let correlationId = "";
+      let innerForSend = data;
+      try {
+        const parsed: any = JSONbig.parse(data);
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed) &&
+          !parsed.correlationId
+        ) {
+          correlationId = crypto.randomBytes(16).toString("hex");
+          parsed.correlationId = correlationId;
+          innerForSend = JSONbig.stringify(parsed);
+          waitForResponse = true;
+        }
+      } catch {
+        // data is not JSON — keep legacy fire-and-forget behavior.
+      }
+
+      let responsePromise: Promise<{ resCode: number; obj: any }> | undefined;
+      if (waitForResponse) {
+        const timeoutMs = Number(process.env.DECILLION_SIGNAL_TIMEOUT_MS || "30000");
+        const cid = correlationId;
+        responsePromise = new Promise<{ resCode: number; obj: any }>((resolve) => {
+          let timer: NodeJS.Timeout | undefined;
+          this.pendingSignalResponses[cid] = (resp: any) => {
+            if (timer) clearTimeout(timer);
+            resolve({ resCode: 0, obj: resp });
+          };
+          timer = setTimeout(() => {
+            if (this.pendingSignalResponses[cid]) {
+              delete this.pendingSignalResponses[cid];
+              resolve({
+                resCode: 32,
+                obj: {
+                  message: `creature signal response timeout`,
+                  correlationId: cid,
+                  timeoutMs,
+                },
+              });
+            }
+          }, timeoutMs);
+        });
+      }
+
+      const sendRes = await this.sendRequest(this.userId, "/creatures/signal", {
         type: "pvp",
         creatureId,
         // Forward programId and entityId at the top level so the server's
@@ -631,8 +689,15 @@ class Decillion {
         entityId: entity,
         storeId,
         temp,
-        data: JSONbig.stringify({ programId, entity, payload: data }),
+        data: JSONbig.stringify({ programId, entity, payload: innerForSend }),
       });
+      if (!waitForResponse || sendRes.resCode !== 0) {
+        if (waitForResponse && correlationId && this.pendingSignalResponses[correlationId]) {
+          delete this.pendingSignalResponses[correlationId];
+        }
+        return sendRes;
+      }
+      return responsePromise!;
     },
     create: async (payload: any): Promise<{ resCode: number; obj: any }> => {
       return await this.sendRequest("", "/creatures/create", payload);
