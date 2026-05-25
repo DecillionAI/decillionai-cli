@@ -628,15 +628,22 @@ class Decillion {
       // signal the result back over key "creatures/signal/result". This makes
       // direct signals symmetrical with miniapp signals: the call resolves to
       // the actual VM response instead of just the synchronous ACK.
+      //
+      // If the data already has a correlationId we leave it alone — that
+      // means the call came from `signalMiniapp`, which manages its own
+      // pendingSignalResponses entry and would have ours overwrite its.
       let waitForResponse = false;
       let correlationId = "";
       let innerForSend = data;
       try {
         const parsed: any = JSONbig.parse(data);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          correlationId = parsed.correlationId
-            ? String(parsed.correlationId)
-            : crypto.randomBytes(16).toString("hex");
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed) &&
+          !parsed.correlationId
+        ) {
+          correlationId = crypto.randomBytes(16).toString("hex");
           parsed.correlationId = correlationId;
           innerForSend = JSONbig.stringify(parsed);
           waitForResponse = true;
