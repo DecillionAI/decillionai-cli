@@ -1726,6 +1726,40 @@ const commands: {
       return await app.programs.updateMachine(args[0], args[1], metadata);
     }
   },
+  // Deploys a prebuilt wasm/binary directly from a file path, skipping the
+  // builder/src convention used by `programs.deploy`. Useful for shipping
+  // creature endpoints whose .wasm is produced by an external toolchain
+  // (e.g. tinygo) without restructuring into the legacy build folder.
+  "programs.deployRaw": async (
+    args: string[]
+  ): Promise<{ resCode: number; obj: any }> => {
+    if (args.length < 3 || args.length > 5) {
+      return { resCode: 30, obj: { message: "usage: programs.deployRaw [machineId] [entityId] [wasmPath] [optional runtime=wasm] [optional metadataJson]" } };
+    }
+    const [machineId, entityId, wasmPath, runtimeArg, metaArg] = args;
+    const runtime = runtimeArg || "wasm";
+    let metadata: any = {};
+    if (metaArg) {
+      try {
+        metadata = JSONbig.parse(metaArg);
+      } catch (ex) {
+        return { resCode: 30, obj: { message: "invalid metadata json" } };
+      }
+    }
+    metadata.entityId = entityId;
+    let bc: Buffer;
+    try {
+      bc = fs.readFileSync(wasmPath);
+    } catch (ex: any) {
+      return { resCode: 30, obj: { message: `cannot read wasm file: ${ex.message}` } };
+    }
+    return await app.programs.deploy(
+      machineId,
+      bc.toString("base64"),
+      runtime,
+      metadata
+    );
+  },
   "programs.deploy": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
