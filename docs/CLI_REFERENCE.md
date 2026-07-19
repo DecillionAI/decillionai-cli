@@ -110,6 +110,11 @@ decillion --batch-file ./commands.txt
 | `programs.update` | `[programId] [path] [metadataJsonOrFilePath] [optional promptFile]` | Update program. |
 | `programs.delete` | `[programId]` | Delete program. |
 | `programs.deploy` | `[programId] [programFolderPath] [runtime] [metadata]` | Deploy program artifacts. |
+| `programs.deployRaw` | `[programId] [entityId] [wasmPath] [optional runtime] [optional metadataJson]` | Deploy a prebuilt artifact directly from a file. |
+| `programs.deployFrontend` | `[programId] [entityId] [scriptPath] [optional metadataJson]` | Deploy an Elpian front-end script as a *downloadable* entity (fetched and executed client-side). |
+| `programs.deployBackend` | `[programId] [entityId] [wasmPath] [optional metadataJson]` | Deploy a wasm back-end service entity; it runs whenever it receives a signal. |
+| `programs.deployAgent` | `[programId] [entityId] [skillPath] [davinciProgramId] [optional davinciEntityId]` | Deploy an AI-agent skill file as a proxy entity forwarding to a davinci docker-VM creature; responses come back through the proxy with the correlation id preserved. |
+| `programs.downloadEntity` | `[programId] [entityId] [optional outPath]` | Download a downloadable entity's script (base64; optionally saved to a file). |
 | `programs.run` | `[programId]` | Run program entity (`main`). |
 | `programs.list` | `[offset] [count]` | List programs. |
 
