@@ -152,6 +152,23 @@ class Decillion {
           } else {
             console.log("[signal-result]", obj);
           }
+        } else if (
+          key == "creatures/signal" &&
+          obj && typeof obj === "object" &&
+          obj.correlationId &&
+          this.pendingSignalResponses[obj.correlationId]
+        ) {
+          // Response relayed back through a Caspar proxy entity: the node
+          // delivers it on the plain "creatures/signal" key with the proxy
+          // entity as sender and the original correlationId preserved. The
+          // useful payload is the Send packet's `data` JSON string.
+          const resolve = this.pendingSignalResponses[obj.correlationId];
+          delete this.pendingSignalResponses[obj.correlationId];
+          let inner: any = obj.data;
+          if (typeof inner === "string") {
+            try { inner = JSONbig.parse(inner); } catch { /* keep raw string */ }
+          }
+          resolve(inner !== undefined && inner !== "" ? inner : obj);
         } else if (key == "pc/message") {
           if (pcId) process.stdout.write(obj.message);
         } else if (key == "docker/build") {
@@ -1017,6 +1034,104 @@ class Decillion {
         metadata: metadata,
       });
     },
+    // Deploy a front-end app (Elpian VM script) as a downloadable program
+    // entity. Nothing runs on the node; clients fetch the script with
+    // programs.downloadEntity and execute it locally.
+    deployFrontend: async (
+      machineId: string,
+      entityId: string,
+      scriptB64: string,
+      metadata: { [key: string]: any } = {}
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/programs/deploy", {
+        machineId,
+        entityId,
+        entityType: metadata.entityType || "elpian",
+        payload: scriptB64,
+        downloadable: true,
+        metadata: { ...metadata, delivery: "download" },
+      });
+    },
+    // Deploy a back-end service as a wasm program entity: it runs whenever a
+    // signal is sent to it (the natural wasm-VM behaviour in Caspar).
+    deployBackend: async (
+      machineId: string,
+      entityId: string,
+      moduleB64: string,
+      metadata: { [key: string]: any } = {}
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/programs/deploy", {
+        machineId,
+        entityId,
+        entityType: "wasm",
+        payload: moduleB64,
+        metadata,
+      });
+    },
+    // Deploy an AI agent: a skill file shipped as a Caspar *proxy* entity
+    // targeting a davinci docker-VM creature. Signals to the agent entity are
+    // forwarded with the skill attached (used as the davinci session's system
+    // instruction) and davinci's result is routed back through the proxy with
+    // the correlation id preserved — so creatures.signal resolves with it.
+    deployAgent: async (
+      machineId: string,
+      entityId: string,
+      skillB64: string,
+      targetProgramId: string,
+      targetEntityId: string = "",
+      attachField: string = "skill",
+      metadata: { [key: string]: any } = {}
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/programs/deploy", {
+        machineId,
+        entityId,
+        entityType: "proxy",
+        payload: skillB64,
+        metadata: {
+          ...metadata,
+          proxy: {
+            targetProgramId,
+            targetEntityId,
+            attachField,
+          },
+        },
+      });
+    },
+    // Fetch a downloadable entity (e.g. a deployed front-end script) as
+    // base64 for client-side execution.
+    downloadEntity: async (
+      machineId: string,
+      entityId: string
+    ): Promise<{ resCode: number; obj: any }> => {
+      if (!this.userId) {
+        return {
+          resCode: USER_ID_NOT_SET_ERR_CODE,
+          obj: { message: USER_ID_NOT_SET_ERR_MSG },
+        };
+      }
+      return await this.sendRequest(this.userId, "/programs/downloadEntity", {
+        machineId,
+        entityId,
+      });
+    },
     runMachine: async (
       machineId: string,
     ): Promise<{ resCode: number; obj: any }> => {
@@ -1759,6 +1874,98 @@ const commands: {
       runtime,
       metadata
     );
+  },
+  // Deploy an Elpian front-end app as a downloadable entity.
+  // usage: programs.deployFrontend [machineId] [entityId] [scriptPath] [optional metadataJson]
+  "programs.deployFrontend": async (
+    args: string[]
+  ): Promise<{ resCode: number; obj: any }> => {
+    if (args.length < 3 || args.length > 4) {
+      return { resCode: 30, obj: { message: "usage: programs.deployFrontend [machineId] [entityId] [scriptPath] [optional metadataJson]" } };
+    }
+    const [machineId, entityId, scriptPath, metaArg] = args;
+    let metadata: any = {};
+    if (metaArg) {
+      try {
+        metadata = JSONbig.parse(metaArg);
+      } catch (ex) {
+        return { resCode: 30, obj: { message: "invalid metadata json" } };
+      }
+    }
+    let script: Buffer;
+    try {
+      script = fs.readFileSync(scriptPath);
+    } catch (ex: any) {
+      return { resCode: 30, obj: { message: `cannot read script file: ${ex.message}` } };
+    }
+    return await app.programs.deployFrontend(machineId, entityId, script.toString("base64"), metadata);
+  },
+  // Deploy a wasm back-end service entity (runs on incoming signals).
+  // usage: programs.deployBackend [machineId] [entityId] [wasmPath] [optional metadataJson]
+  "programs.deployBackend": async (
+    args: string[]
+  ): Promise<{ resCode: number; obj: any }> => {
+    if (args.length < 3 || args.length > 4) {
+      return { resCode: 30, obj: { message: "usage: programs.deployBackend [machineId] [entityId] [wasmPath] [optional metadataJson]" } };
+    }
+    const [machineId, entityId, wasmPath, metaArg] = args;
+    let metadata: any = {};
+    if (metaArg) {
+      try {
+        metadata = JSONbig.parse(metaArg);
+      } catch (ex) {
+        return { resCode: 30, obj: { message: "invalid metadata json" } };
+      }
+    }
+    let bc: Buffer;
+    try {
+      bc = fs.readFileSync(wasmPath);
+    } catch (ex: any) {
+      return { resCode: 30, obj: { message: `cannot read wasm file: ${ex.message}` } };
+    }
+    return await app.programs.deployBackend(machineId, entityId, bc.toString("base64"), metadata);
+  },
+  // Deploy an AI agent skill as a proxy entity targeting a davinci creature.
+  // usage: programs.deployAgent [machineId] [entityId] [skillPath] [davinciProgramId] [optional davinciEntityId]
+  "programs.deployAgent": async (
+    args: string[]
+  ): Promise<{ resCode: number; obj: any }> => {
+    if (args.length < 4 || args.length > 5) {
+      return { resCode: 30, obj: { message: "usage: programs.deployAgent [machineId] [entityId] [skillPath] [davinciProgramId] [optional davinciEntityId]" } };
+    }
+    const [machineId, entityId, skillPath, davinciProgramId, davinciEntityId] = args;
+    let skill: Buffer;
+    try {
+      skill = fs.readFileSync(skillPath);
+    } catch (ex: any) {
+      return { resCode: 30, obj: { message: `cannot read skill file: ${ex.message}` } };
+    }
+    return await app.programs.deployAgent(
+      machineId,
+      entityId,
+      skill.toString("base64"),
+      davinciProgramId,
+      davinciEntityId || ""
+    );
+  },
+  // Download a downloadable entity's script (e.g. a deployed front-end app).
+  // usage: programs.downloadEntity [machineId] [entityId] [optional outPath]
+  "programs.downloadEntity": async (
+    args: string[]
+  ): Promise<{ resCode: number; obj: any }> => {
+    if (args.length < 2 || args.length > 3) {
+      return { resCode: 30, obj: { message: "usage: programs.downloadEntity [machineId] [entityId] [optional outPath]" } };
+    }
+    const res = await app.programs.downloadEntity(args[0], args[1]);
+    if (res.resCode === 0 && args[2] && res.obj && res.obj.payload) {
+      try {
+        fs.writeFileSync(args[2], Buffer.from(res.obj.payload, "base64"));
+        res.obj.savedTo = args[2];
+      } catch (ex: any) {
+        return { resCode: 31, obj: { message: `cannot write output file: ${ex.message}` } };
+      }
+    }
+    return res;
   },
   "programs.deploy": async (
     args: string[]
