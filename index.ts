@@ -1108,6 +1108,9 @@ class Decillion {
         metadata: {
           ...metadata,
           proxy: {
+            // extras like correlationTtlMs (correlation-record lifetime, ms)
+            // pass through from metadata.proxy; explicit args win.
+            ...(metadata.proxy || {}),
             targetProgramId,
             targetEntityId,
             attachField,
