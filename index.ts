@@ -849,48 +849,47 @@ class Decillion {
     return responsePromise;
   }
 
-  public points = {
+  public spaces = {
     create: async (isPublic: boolean, persHist: boolean, origin: string, metadata: { [key: string]: any }) =>
-      this.signalMiniapp("stores", "create", { isPublic, persHist, origin, metadata }),
-    update: async (pointId: string, isPublic: boolean, persHist: boolean) =>
-      this.signalMiniapp("stores", "update", { storeId: pointId, isPublic, persHist }),
-    delete: async (pointId: string) => this.signalMiniapp("stores", "delete", { storeId: pointId }),
-    get: async (pointId: string) => this.signalMiniapp("stores", "get", { storeId: pointId }),
-    myPoints: async (offset: number, count: number, tag: string, orig: string) =>
-      this.signalMiniapp("stores", "read", { offset, count, tag, orig }),
-    list: async (offset: number, count: number) => this.signalMiniapp("stores", "list", { offset, count }),
-    join: async (pointId: string) => this.signalMiniapp("stores", "join", { storeId: pointId }),
-    history: async (pointId: string) => this.signalMiniapp("stores", "history", { storeId: pointId }),
-    signal: async (pointId: string, userId: string, typ: string, data: string, lockId?: string, isTemp?: boolean) =>
-      this.signalMiniapp("stores", "signal", { storeId: pointId, userId, type: typ, data, lockId }, !!isTemp),
-    addMachine: async (pointId: string, appId: string, machineId: string) =>
-      this.signalMiniapp("stores", "addProgram", { storeId: pointId, creatureId: appId, programId: machineId }),
-    addMember: async (userId: string, pointId: string, metadata: { [key: string]: any }) =>
-      this.signalMiniapp("stores", "addMember", { storeId: pointId, userId, metadata }),
-    updateMember: async (userId: string, pointId: string, metadata: { [key: string]: any }) =>
-      this.signalMiniapp("stores", "updateMember", { storeId: pointId, userId, metadata }),
-    removeMember: async (userId: string, pointId: string) =>
-      this.signalMiniapp("stores", "removeMember", { storeId: pointId, userId }),
-    listMembers: async (pointId: string) => this.signalMiniapp("stores", "readMembers", { storeId: pointId }),
-    leave: async (pointId: string) => this.signalMiniapp("stores", "leave", { storeId: pointId }),
-    addApp: async (payload: any) => this.signalMiniapp("stores", "addCreature", payload),
-    listApps: async (payload: any) => this.signalMiniapp("stores", "listCreatures", payload),
-    updateMachine: async (payload: any) => this.signalMiniapp("stores", "updateProgram", payload),
-    removeApp: async (payload: any) => this.signalMiniapp("stores", "removeCreature", payload),
-    removeMachine: async (payload: any) => this.signalMiniapp("stores", "removeProgram", payload),
-    updateMemberAccess: async (payload: any) => this.signalMiniapp("stores", "updateMemberAccess", payload),
-    updateMachineAccess: async (payload: any) => this.signalMiniapp("stores", "updateProgramAccess", payload),
-    getDefaultAccess: async (payload: any) => this.signalMiniapp("stores", "getDefaultAccess", payload),
-    meta: async (pointId: string) => this.signalMiniapp("stores", "meta", { storeId: pointId }),
+      this.signalMiniapp("spaces", "create", { isPublic, persHist, origin, metadata }),
+    update: async (spaceId: string, isPublic: boolean, persHist: boolean) =>
+      this.signalMiniapp("spaces", "update", { storeId: spaceId, isPublic, persHist }),
+    delete: async (spaceId: string) => this.signalMiniapp("spaces", "delete", { storeId: spaceId }),
+    get: async (spaceId: string) => this.signalMiniapp("spaces", "get", { storeId: spaceId }),
+    mySpaces: async (offset: number, count: number, tag: string, orig: string) =>
+      this.signalMiniapp("spaces", "read", { offset, count, tag, orig }),
+    list: async (offset: number, count: number) => this.signalMiniapp("spaces", "list", { offset, count }),
+    join: async (spaceId: string) => this.signalMiniapp("spaces", "join", { storeId: spaceId }),
+    history: async (spaceId: string) => this.signalMiniapp("spaces", "history", { storeId: spaceId }),
+    signal: async (spaceId: string, userId: string, typ: string, data: string, lockId?: string, isTemp?: boolean) =>
+      this.signalMiniapp("spaces", "signal", { storeId: spaceId, userId, type: typ, data, lockId }, !!isTemp),
+    addMachine: async (spaceId: string, appId: string, machineId: string) =>
+      this.signalMiniapp("spaces", "addProgram", { storeId: spaceId, creatureId: appId, programId: machineId }),
+    addMember: async (userId: string, spaceId: string, metadata: { [key: string]: any }) =>
+      this.signalMiniapp("spaces", "addMember", { storeId: spaceId, userId, metadata }),
+    updateMember: async (userId: string, spaceId: string, metadata: { [key: string]: any }) =>
+      this.signalMiniapp("spaces", "updateMember", { storeId: spaceId, userId, metadata }),
+    removeMember: async (userId: string, spaceId: string) =>
+      this.signalMiniapp("spaces", "removeMember", { storeId: spaceId, userId }),
+    listMembers: async (spaceId: string) => this.signalMiniapp("spaces", "readMembers", { storeId: spaceId }),
+    leave: async (spaceId: string) => this.signalMiniapp("spaces", "leave", { storeId: spaceId }),
+    addApp: async (payload: any) => this.signalMiniapp("spaces", "addCreature", payload),
+    listApps: async (payload: any) => this.signalMiniapp("spaces", "listCreatures", payload),
+    updateMachine: async (payload: any) => this.signalMiniapp("spaces", "updateProgram", payload),
+    removeApp: async (payload: any) => this.signalMiniapp("spaces", "removeCreature", payload),
+    removeMachine: async (payload: any) => this.signalMiniapp("spaces", "removeProgram", payload),
+    updateMemberAccess: async (payload: any) => this.signalMiniapp("spaces", "updateMemberAccess", payload),
+    updateMachineAccess: async (payload: any) => this.signalMiniapp("spaces", "updateProgramAccess", payload),
+    getDefaultAccess: async (payload: any) => this.signalMiniapp("spaces", "getDefaultAccess", payload),
+    meta: async (spaceId: string) => this.signalMiniapp("spaces", "meta", { storeId: spaceId }),
   };
-  public stores = this.points;
 
   public invites = {
-    create: async (pointId: string, userId: string) => this.signalMiniapp("invites", "create", { storeId: pointId, userId }),
-    cancel: async (pointId: string, userId: string) => this.signalMiniapp("invites", "cancel", { storeId: pointId, userId }),
-    accept: async (pointId: string) => this.signalMiniapp("invites", "accept", { storeId: pointId }),
-    decline: async (pointId: string) => this.signalMiniapp("invites", "decline", { storeId: pointId }),
-    listPointInvites: async (pointId: string) => this.signalMiniapp("invites", "listPointInvites", { storeId: pointId }),
+    create: async (spaceId: string, userId: string) => this.signalMiniapp("invites", "create", { storeId: spaceId, userId }),
+    cancel: async (spaceId: string, userId: string) => this.signalMiniapp("invites", "cancel", { storeId: spaceId, userId }),
+    accept: async (spaceId: string) => this.signalMiniapp("invites", "accept", { storeId: spaceId }),
+    decline: async (spaceId: string) => this.signalMiniapp("invites", "decline", { storeId: spaceId }),
+    listPointInvites: async (spaceId: string) => this.signalMiniapp("invites", "listPointInvites", { storeId: spaceId }),
     listUserInvites: async () => this.signalMiniapp("invites", "listUserInvites", {}),
   };
 
@@ -900,8 +899,8 @@ class Decillion {
     submitBaseTrx: async (chainId: BigInt, key: string, obj: any) =>
       this.signalMiniapp("chains", "submitBaseTrx", { chainId, key, payload: obj }),
     registerNode: async (orig: string) => this.signalMiniapp("chains", "registerNode", { orig }),
-    createFromPoint: async (pointId: string, isTemp: boolean) =>
-      this.signalMiniapp("chains", "createFromPoint", { storeId: pointId, isTemp }),
+    createFromPoint: async (spaceId: string, isTemp: boolean) =>
+      this.signalMiniapp("chains", "createFromPoint", { storeId: spaceId, isTemp }),
   };
 
   public programs = {
@@ -1272,8 +1271,8 @@ class Decillion {
     },
   };
   storage = {
-    upload: async (pointId: string, data: Buffer, fileId?: string) => {
-      return this.signalMiniapp("storage", "upload", { storeId: pointId, data: data.toString("base64"), fileId });
+    upload: async (spaceId: string, data: Buffer, fileId?: string) => {
+      return this.signalMiniapp("storage", "upload", { storeId: spaceId, data: data.toString("base64"), fileId });
     },
     uploadUserEntity: async (data: Buffer, entityId: string, machineId?: string) => {
       return this.signalMiniapp("storage", "uploadCreatureEntity", { machineId, data: data.toString("base64"), entityId });
@@ -1281,17 +1280,17 @@ class Decillion {
     deleteUserEntity: async (entityId: string) => {
       return this.signalMiniapp("storage", "deleteCreatureEntity", { entityId });
     },
-    uploadPointEntity: async (pointId: string, entityId: string, data: Buffer) => {
-      return this.signalMiniapp("storage", "uploadStoreEntity", { storeId: pointId, entityId, data: data.toString("base64") });
+    uploadPointEntity: async (spaceId: string, entityId: string, data: Buffer) => {
+      return this.signalMiniapp("storage", "uploadStoreEntity", { storeId: spaceId, entityId, data: data.toString("base64") });
     },
     uploadAppEntity: async (appId: string, entityId: string, data: Buffer) => {
       return this.signalMiniapp("storage", "uploadMachineEntity", { appId, entityId, data: data.toString("base64") });
     },
-    deletePointEntity: async (pointId: string, entityId: string) => {
-      return this.signalMiniapp("storage", "deleteStoreEntity", { storeId: pointId, entityId });
+    deletePointEntity: async (spaceId: string, entityId: string) => {
+      return this.signalMiniapp("storage", "deleteStoreEntity", { storeId: spaceId, entityId });
     },
-  download: async (pointId: string, fileId: string) => {
-      let res = await this.signalMiniapp("storage", "download", { storeId: pointId, fileId });
+  download: async (spaceId: string, fileId: string) => {
+      let res = await this.signalMiniapp("storage", "download", { storeId: spaceId, fileId });
       if (res.resCode === 0) {
         return new Promise((resolve, reject) => {
           fs.writeFile(
@@ -1471,7 +1470,7 @@ const commands: {
     }
     return app.creatures.signal(args[0], args[1], args[2], args[3], args.length === 5 ? args[4] : undefined);
   },
-  "stores.create": async (
+  "spaces.create": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 4) {
@@ -1489,7 +1488,7 @@ const commands: {
         obj: { message: "unknown parameter value: persHist --> " + args[1] },
       };
     }
-    return await app.stores.create(
+    return await app.spaces.create(
       args[0] === "true",
       args[1] === "true",
       args[2],
@@ -1503,7 +1502,7 @@ const commands: {
       }
     );
   },
-  "stores.update": async (
+  "spaces.update": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1521,37 +1520,37 @@ const commands: {
         obj: { message: "unknown parameter value: persHist --> " + args[2] },
       };
     }
-    return await app.stores.update(
+    return await app.spaces.update(
       args[0],
       args[1] === "true",
       args[2] === "true"
     );
   },
-  "stores.get": async (
+  "spaces.get": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.get(args[0]);
+    return await app.spaces.get(args[0]);
   },
-  "stores.delete": async (
+  "spaces.delete": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.delete(args[0]);
+    return await app.spaces.delete(args[0]);
   },
-  "stores.join": async (
+  "spaces.join": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.join(args[0]);
+    return await app.spaces.join(args[0]);
   },
-  "stores.myPoints": async (
+  "spaces.mySpaces": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1569,14 +1568,14 @@ const commands: {
         obj: { message: "invalid numeric value: count --> " + args[1] },
       };
     }
-    return await app.stores.myPoints(
+    return await app.spaces.mySpaces(
       Number(args[0]),
       Number(args[1]),
       "",
       args[2]
     );
   },
-  "stores.list": async (
+  "spaces.list": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 2) {
@@ -1594,41 +1593,41 @@ const commands: {
         obj: { message: "invalid numeric value: count --> " + args[1] },
       };
     }
-    return await app.stores.list(Number(args[0]), Number(args[1]));
+    return await app.spaces.list(Number(args[0]), Number(args[1]));
   },
-  "stores.history": async (
+  "spaces.history": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.history(args[0]);
+    return await app.spaces.history(args[0]);
   },
-  "stores.signal": async (
+  "spaces.signal": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 4) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.signal(args[0], args[1], args[2], args[3]);
+    return await app.spaces.signal(args[0], args[1], args[2], args[3]);
   },
-  "stores.fileSignal": async (
+  "spaces.fileSignal": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 4) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.signal(args[0], args[1], args[2], args[3]);
+    return await app.spaces.signal(args[0], args[1], args[2], args[3]);
   },
-  "stores.paidSignal": async (
+  "spaces.paidSignal": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 5) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.signal(args[0], args[1], args[2], args[3], args[4]);
+    return await app.spaces.signal(args[0], args[1], args[2], args[3], args[4]);
   },
-  "stores.addMember": async (
+  "spaces.addMember": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1640,9 +1639,9 @@ const commands: {
     } catch (ex) {
       return { resCode: 30, obj: { message: "invalid metadata json" } };
     }
-    return await app.stores.addMember(args[0], args[1], metadata);
+    return await app.spaces.addMember(args[0], args[1], metadata);
   },
-  "stores.updateMember": async (
+  "spaces.updateMember": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
@@ -1654,31 +1653,31 @@ const commands: {
     } catch (ex) {
       return { resCode: 30, obj: { message: "invalid metadata json" } };
     }
-    return await app.stores.updateMember(args[0], args[1], metadata);
+    return await app.spaces.updateMember(args[0], args[1], metadata);
   },
-  "stores.removeMember": async (
+  "spaces.removeMember": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 2) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.removeMember(args[0], args[1]);
+    return await app.spaces.removeMember(args[0], args[1]);
   },
-  "stores.listMembers": async (
+  "spaces.listMembers": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 1) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.listMembers(args[0]);
+    return await app.spaces.listMembers(args[0]);
   },
-  "stores.addMachine": async (
+  "spaces.addMachine": async (
     args: string[]
   ): Promise<{ resCode: number; obj: any }> => {
     if (args.length !== 3) {
       return { resCode: 30, obj: { message: "invalid parameters count" } };
     }
-    return await app.stores.addMachine(args[0], args[1], args[2]);
+    return await app.spaces.addMachine(args[0], args[1], args[2]);
   },
   "invites.create": async (
     args: string[]
@@ -2094,74 +2093,74 @@ const helpEntries: { [key: string]: string } = {
   "creatures.signal": `creatures.signal [creatureId] [programId] [entity] [data] [optional storeId]
   → Send a signal to a creature miniapp program/entity target.
   Example: creatures.signal 123@global 456@global main '{"cmd":"ping"}'`,
-  "stores.create": `stores.create [isPublic] [hasPersistentHistory] [origin] [title]
-  → Create a new point.
-  Example: stores.create true true global study-room`,
-  "stores.update": `stores.update [pointId] [isPublic] [hasPersistentHistory]
-  → Update visibility/history settings for a point.
-  Example: stores.update 345@global false true`,
-  "stores.get": `stores.get [pointId]
-  → Retrieve details of a point.
-  Example: stores.get 345@global`,
-  "stores.delete": `stores.delete [pointId]
-  → Delete a point.
-  Example: stores.delete 345@global`,
-  "stores.join": `stores.join [pointId]
-  → Join a public point.
-  Example: stores.join 345@global`,
-  "stores.myPoints": `stores.myPoints [offset] [count] [origin]
-  → List your own points in an origin.
-  Example: stores.myPoints 0 10 global`,
-  "stores.list": `stores.list [offset] [count]
-  → List points with pagination.
-  Example: stores.list 0 10`,
-  "stores.history": `stores.history [pointId]
-  → Read signal/history log of a point.
-  Example: stores.history 345@global`,
-  "stores.signal": `stores.signal [pointId] [userId] [transferType] [data]
+  "spaces.create": `spaces.create [isPublic] [hasPersistentHistory] [origin] [title]
+  → Create a new space.
+  Example: spaces.create true true global study-room`,
+  "spaces.update": `spaces.update [spaceId] [isPublic] [hasPersistentHistory]
+  → Update visibility/history settings for a space.
+  Example: spaces.update 345@global false true`,
+  "spaces.get": `spaces.get [spaceId]
+  → Retrieve details of a space.
+  Example: spaces.get 345@global`,
+  "spaces.delete": `spaces.delete [spaceId]
+  → Delete a space.
+  Example: spaces.delete 345@global`,
+  "spaces.join": `spaces.join [spaceId]
+  → Join a public space.
+  Example: spaces.join 345@global`,
+  "spaces.mySpaces": `spaces.mySpaces [offset] [count] [origin]
+  → List your own spaces in an origin.
+  Example: spaces.mySpaces 0 10 global`,
+  "spaces.list": `spaces.list [offset] [count]
+  → List spaces with pagination.
+  Example: spaces.list 0 10`,
+  "spaces.history": `spaces.history [spaceId]
+  → Read signal/history log of a space.
+  Example: spaces.history 345@global`,
+  "spaces.signal": `spaces.signal [spaceId] [userId] [transferType] [data]
   → Send a signal/message.
-  Example: stores.signal 345@global - broadcast {"text":"hello"}`,
-  "stores.fileSignal": `stores.fileSignal [pointId] [userId] [transferType] [data]
+  Example: spaces.signal 345@global - broadcast {"text":"hello"}`,
+  "spaces.fileSignal": `spaces.fileSignal [spaceId] [userId] [transferType] [data]
   → Send a signal carrying file/entity metadata.
-  Example: stores.fileSignal 345@global 123@global single {"fileId":"789@global"}`,
-  "stores.paidSignal": `stores.paidSignal [pointId] [userId] [transferType] [data] [lockId]
+  Example: spaces.fileSignal 345@global 123@global single {"fileId":"789@global"}`,
+  "spaces.paidSignal": `spaces.paidSignal [spaceId] [userId] [transferType] [data] [lockId]
   → Send a paid signal bound to a lock id.
-  Example: stores.paidSignal 345@global 123@global single {"task":"run"} 4f0f02a8d0`,
-  "stores.addMember": `stores.addMember [userId] [pointId] [metadata]
-  → Add user membership to a point.
-  Example: stores.addMember 123@global 345@global {"role":"teacher"}`,
-  "stores.updateMember": `stores.updateMember [userId] [pointId] [metadata]
-  → Update a user's point membership metadata.
-  Example: stores.updateMember 123@global 345@global {"role":"moderator"}`,
-  "stores.removeMember": `stores.removeMember [userId] [pointId]
-  → Revoke a user membership from a point.
-  Example: stores.removeMember 123@global 345@global`,
-  "stores.listMembers": `stores.listMembers [pointId]
-  → List members in a point.
-  Example: stores.listMembers 345@global`,
-  "stores.addMachine": `stores.addMachine [pointId] [appId] [machineId]
-  → Attach a machine to a point.
-  Example: stores.addMachine 345@global 984@global 876@global`,
-  "invites.create": `invites.create [pointId] [userId]
-  → Invite a user to a point.
+  Example: spaces.paidSignal 345@global 123@global single {"task":"run"} 4f0f02a8d0`,
+  "spaces.addMember": `spaces.addMember [userId] [spaceId] [metadata]
+  → Add user membership to a space.
+  Example: spaces.addMember 123@global 345@global {"role":"teacher"}`,
+  "spaces.updateMember": `spaces.updateMember [userId] [spaceId] [metadata]
+  → Update a user's space membership metadata.
+  Example: spaces.updateMember 123@global 345@global {"role":"moderator"}`,
+  "spaces.removeMember": `spaces.removeMember [userId] [spaceId]
+  → Revoke a user membership from a space.
+  Example: spaces.removeMember 123@global 345@global`,
+  "spaces.listMembers": `spaces.listMembers [spaceId]
+  → List members in a space.
+  Example: spaces.listMembers 345@global`,
+  "spaces.addMachine": `spaces.addMachine [spaceId] [appId] [machineId]
+  → Attach a machine to a space.
+  Example: spaces.addMachine 345@global 984@global 876@global`,
+  "invites.create": `invites.create [spaceId] [userId]
+  → Invite a user to a space.
   Example: invites.create 345@global 123@global`,
-  "invites.cancel": `invites.cancel [pointId] [userId]
+  "invites.cancel": `invites.cancel [spaceId] [userId]
   → Cancel a previously sent invitation.
   Example: invites.cancel 345@global 123@global`,
-  "invites.accept": `invites.accept [pointId]
-  → Accept a point invitation.
+  "invites.accept": `invites.accept [spaceId]
+  → Accept a space invitation.
   Example: invites.accept 345@global`,
-  "invites.decline": `invites.decline [pointId]
-  → Decline a point invitation.
+  "invites.decline": `invites.decline [spaceId]
+  → Decline a space invitation.
   Example: invites.decline 345@global`,
-  "storage.upload": `storage.upload [pointId] [filePath] [optional fileId]
-  → Upload a file to a point.
+  "storage.upload": `storage.upload [spaceId] [filePath] [optional fileId]
+  → Upload a file to a space.
   Example: storage.upload 345@global ./book.pdf`,
   "storage.uploadUserEntity": `storage.uploadUserEntity [entityId] [filePath] [optional machineId]
   → Upload a user-scoped entity file.
   Example: storage.uploadUserEntity avatar-v1 ./avatar.png`,
-  "storage.download": `storage.download [pointId] [fileId]
-  → Download a file from a point.
+  "storage.download": `storage.download [spaceId] [fileId]
+  → Download a file from a space.
   Example: storage.download 345@global 789@global`,
   "chains.create": `chains.create [participants stakes json] [isTemporary]
   → Create a workchain.
@@ -2209,7 +2208,7 @@ ${Object.values(helpEntries).join("\n\n")}
 help [optional command]
   → Show full help or command-specific help.
   Example1: help
-  Example2: help stores.signal
+  Example2: help spaces.signal
 
 Non-interactive mode:
   1) Single command: decillion <command> [args...]

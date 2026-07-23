@@ -4,7 +4,7 @@ A TypeScript/Node.js CLI for the **current Decillion protocol model**:
 
 - **creatures** (identity/account + signal dispatch)
 - **programs** (deployable/runnable logic under creatures)
-- **stores/spaces** (collaboration/message surfaces)
+- **spaces** (collaboration/message surfaces)
 - **miniapp-backed domains** (invites, storage, chains, pc)
 
 ## Install
@@ -48,7 +48,7 @@ decillion creatures.me
 ### Batch string
 
 ```bash
-decillion --batch "creatures.me; stores.list 0 10"
+decillion --batch "creatures.me; spaces.list 0 10"
 ```
 
 ### Batch file
@@ -82,7 +82,7 @@ decillion logout
 
 ## Miniapp routing environment variables
 
-Some command families (stores/invites/storage/chains/pc) are routed through creature signaling.
+Some command families (spaces/invites/storage/chains/pc) are routed through creature signaling.
 Set target IDs per domain:
 
 - `DECILLION_<KEY>_CREATURE_ID`
@@ -92,7 +92,7 @@ Set target IDs per domain:
 
 Where `<KEY>` is one of:
 
-- `STORES`
+- `SPACES`
 - `INVITES`
 - `STORAGE`
 - `CHAINS`
@@ -101,9 +101,9 @@ Where `<KEY>` is one of:
 Example:
 
 ```bash
-export DECILLION_STORES_CREATURE_ID="..."
-export DECILLION_STORES_PROGRAM_ID="..."
-export DECILLION_STORES_ENTITY="main"
+export DECILLION_SPACES_CREATURE_ID="..."
+export DECILLION_SPACES_PROGRAM_ID="..."
+export DECILLION_SPACES_ENTITY="main"
 ```
 
 ## NPM scripts

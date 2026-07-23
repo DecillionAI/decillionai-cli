@@ -8,12 +8,12 @@ The CLI is aligned with the current backend model:
 
 - `creatures` for account/identity and direct signaling
 - `programs` for program lifecycle actions
-- `stores` for space/store collaboration actions
+- `spaces` for space collaboration actions (Caspar store-backed)
 - `invites`, `storage`, `chains`, and `pc` as command families routed via miniapp signaling
 
 ---
 
-> Protocol update note: the backend model now centers on **creatures + programs + stores(spaces)**. Legacy command families (`users`, `points`, `apps`, `machines`) are kept in CLI for compatibility and internally routed to the new endpoint layout.
+> Protocol update note: the backend model now centers on **creatures + programs + spaces** (each space backed by a Caspar store). Legacy command families (`users`, `apps`, `machines`) are kept in CLI for compatibility and internally routed to the new endpoint layout.
 
 ## Global usage
 
@@ -56,26 +56,26 @@ decillion --batch-file ./commands.txt
 | `creatures.createMachine` | `[chainId] [username] [title] [desc]` | Create a machine-type creature. |
 | `creatures.listMachines` | `[offset] [count]` | List machine creatures. |
 
-## Stores (spaces)
+## Spaces
 
 | Command | Params | Description |
 |---|---|---|
-| `stores.create` | `[isPublic] [hasPersistentHistory] [origin] [title]` | Create store/space. |
-| `stores.update` | `[storeId] [isPublic] [hasPersistentHistory]` | Update store visibility/history. |
-| `stores.get` | `[storeId]` | Get store details. |
-| `stores.delete` | `[storeId]` | Delete store. |
-| `stores.join` | `[storeId]` | Join store. |
-| `stores.myPoints` | `[offset] [count] [origin]` | List your stores. |
-| `stores.list` | `[offset] [count]` | List stores. |
-| `stores.history` | `[storeId]` | Read store history. |
-| `stores.signal` | `[storeId] [userId] [transferType] [data]` | Send store signal. |
-| `stores.fileSignal` | `[storeId] [userId] [transferType] [data]` | Signal with file/entity metadata. |
-| `stores.paidSignal` | `[storeId] [userId] [transferType] [data] [lockId]` | Paid signal with lock. |
-| `stores.addMember` | `[userId] [storeId] [metadata]` | Add member. |
-| `stores.updateMember` | `[userId] [storeId] [metadata]` | Update member metadata. |
-| `stores.removeMember` | `[userId] [storeId]` | Remove member. |
-| `stores.listMembers` | `[storeId]` | List members. |
-| `stores.addMachine` | `[storeId] [creatureId] [programId]` | Attach creature program to store. |
+| `spaces.create` | `[isPublic] [hasPersistentHistory] [origin] [title]` | Create a space. |
+| `spaces.update` | `[storeId] [isPublic] [hasPersistentHistory]` | Update store visibility/history. |
+| `spaces.get` | `[storeId]` | Get store details. |
+| `spaces.delete` | `[storeId]` | Delete store. |
+| `spaces.join` | `[storeId]` | Join store. |
+| `spaces.mySpaces` | `[offset] [count] [origin]` | List your spaces. |
+| `spaces.list` | `[offset] [count]` | List spaces. |
+| `spaces.history` | `[storeId]` | Read store history. |
+| `spaces.signal` | `[storeId] [userId] [transferType] [data]` | Send store signal. |
+| `spaces.fileSignal` | `[storeId] [userId] [transferType] [data]` | Signal with file/entity metadata. |
+| `spaces.paidSignal` | `[storeId] [userId] [transferType] [data] [lockId]` | Paid signal with lock. |
+| `spaces.addMember` | `[userId] [storeId] [metadata]` | Add member. |
+| `spaces.updateMember` | `[userId] [storeId] [metadata]` | Update member metadata. |
+| `spaces.removeMember` | `[userId] [storeId]` | Remove member. |
+| `spaces.listMembers` | `[storeId]` | List members. |
+| `spaces.addMachine` | `[storeId] [creatureId] [programId]` | Attach creature program to store. |
 
 ## Invites
 
@@ -140,5 +140,5 @@ Examples:
 
 ```bash
 decillion creatures.createMachine 1 calcapp Calculator "simple calc app"
-decillion stores.signal 345@global - broadcast '{"text":"hello"}'
+decillion spaces.signal 345@global - broadcast '{"text":"hello"}'
 ```
