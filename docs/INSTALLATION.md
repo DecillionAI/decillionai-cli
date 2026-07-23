@@ -43,7 +43,7 @@ decillion login <username>
 
 ### Configure miniapp routing env vars
 
-Some command families (`stores`, `invites`, `storage`, `chains`, `pc`) are routed through creature signaling.
+Some command families (`spaces`, `invites`, `storage`, `chains`, `pc`) are routed through creature signaling.
 Define target routing values:
 
 - `DECILLION_<KEY>_CREATURE_ID`
@@ -53,7 +53,7 @@ Define target routing values:
 
 `<KEY>` values:
 
-- `STORES`
+- `SPACES`
 - `INVITES`
 - `STORAGE`
 - `CHAINS`
@@ -62,9 +62,9 @@ Define target routing values:
 Example:
 
 ```bash
-export DECILLION_STORES_CREATURE_ID="..."
-export DECILLION_STORES_PROGRAM_ID="..."
-export DECILLION_STORES_ENTITY="main"
+export DECILLION_SPACES_CREATURE_ID="..."
+export DECILLION_SPACES_PROGRAM_ID="..."
+export DECILLION_SPACES_ENTITY="main"
 ```
 
 ## 4) Package metadata
